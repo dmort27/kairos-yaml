@@ -1,0 +1,63 @@
+# Schema for manufacturing VBIEDs
+- steps:
+  - id: obtain-vbied-plans
+    primitive: 'Transaction.Exchange'
+    provenance: 
+      - VBIED1-sent19
+      - VBIED1-sent20
+    slots:
+      - role: AcquirerOrRecipient
+        refvar: attacker
+        constraints: ['PER', 'ORG', 'SID']
+      - role: AcquiredEntity
+        constraints: ['INF']
+        refvar: plans
+        reference: Q1371819 # plan
+  - id: obtain-explosives
+    primitive: 'Transaction.Exchange'
+    slots:
+      - role: AcquirerOrRecipient
+        refvar: attacker
+        constraints: ['PER', 'ORG', 'SID']
+      - role: Artifact
+        refvar: explosives
+        constraints: ['COM']
+        reference: Q12870 # explosive material
+  - id: obtain-vehicle
+    primitive: 'Transaction.Exchange'
+    slots:
+      - role: AcquirerOrRecipient
+        refvar: attacker
+        constraints: ['PER', 'ORG', 'SID']
+      - role: AcquiredEntity
+        refvar: vehicle
+        constraints: ['VEH']
+        reference: Q42889
+  - id: manufacture-vbied
+    primitive: ArtifactExistence.Assemble
+    provenance:
+      - VBIED1-sent28
+      - VBIED1-sent29
+    slots:
+      - role: Agent
+        refvar: attacker
+        constraints: ['PER', 'ORG', 'SID']
+      - role: Components
+        refvar: vehicle
+        constraints: ['VEH']
+      - role: Components
+        refvar: explosives
+        constraints: ['COM']
+      - role: Instrument
+        constraints: ['ABS']
+        refvar: plan
+      - role: Result
+        constraints: ['WEA']
+        reference: Q11244 # car bomb
+  order:
+  - before: obtain-vbied-plans
+    after: manufacture-vbied
+  - before: obtain-explosives
+    after: manufacture-vbied
+  - before: obtain-vehicle
+    after: manufacture-vbied

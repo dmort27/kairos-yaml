@@ -1,0 +1,63 @@
+- steps:
+  - id: obtain-drone
+    primitive: Transaction.Exchange
+    slots:
+    - role: AcquirerOrRecipient
+      refvar: attacker
+      constraints: ['PER', 'ORG', 'SID']
+    - role: AcquiredEntity
+      refvar: drone
+      constraints: ['COM']
+      reference: Q484000 # unmaned aerial vehicle
+  - id: obtain-explosives
+    primitive: Transaction.Exchange
+    slots:
+    - role: AcquirerOrRecipient
+      refvar: attacker
+      constraints: ['PER', 'ORG', 'SID']
+    - role: AcquiredEntity
+      constraints: ['COM']
+      reference: Q12870 # explosive material
+      refvar: explosives
+  - id: build-delivery-mechanisms
+    primitive: ArtifactExistence.Assemble
+    provenance:
+      - DroneBorneIED1-sent1
+      - DroneBorneIED1-sent33
+      - JC002YBTD.jpg
+      - JC002YBTE.jpg
+      - JC002YBTW.png
+    slots:
+    - role: Agent
+      refvar: attacker
+      constraints: ['PER', 'ORG', 'SID']
+    - role: Result
+      constraints: ['COM']
+      refvar: mechanism
+      reference: Q517596 # mechanism
+  - id: attach-payload
+    primitive: ArtifactExistence.Assemble
+    provenance:
+      - JC002YBTX.png
+    slots:
+    - role: Agent
+      constraints: ['PER', 'ORG', 'SID']
+    - role: Components
+      refvar: explosives
+      constraints: ['COM']
+    - role: Components
+      refvar: drone
+      constraints: ['COM']
+    - role: Components
+      refvar: mechanism
+      constraints: ['COM']
+    - role: Result
+      constraints: ['WEA']
+      reference: Q1249453 # improvised explosive device
+  order:
+    - before: obtain-drone
+      after: build-delivery-mechanisms
+    - before: build-delivery-mechanisms
+      after: attach-payload
+    - before: obtain-explosives
+      after: attach-payload
