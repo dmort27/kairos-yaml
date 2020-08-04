@@ -1,21 +1,24 @@
 # %%
-import os
-import sys
+from collections import Counter, OrderedDict, defaultdict
 import json
-import yaml
-from collections import defaultdict, OrderedDict, Counter
-import random
 import logging
+import os
+import random
 
-# %% 
+import yaml
+
+
+# %%
 
 def get_step_type(step):
     # TODO sanity check whether the type exists the ontology?
     return f"kairos:Primitives/{step['primitive']}"
 
+
 def get_slot_role(slot, step_type=None):
     # TODO sanity check whether the role exists the ontology?
     return f"{step_type}/Roles/{slot['role']}"
+
 
 def get_slot_name(slot, slot_shared):
     name = "".join([' ' + x if x.isupper() else x for x in slot["role"]]).lstrip()
@@ -23,6 +26,7 @@ def get_slot_name(slot, slot_shared):
     if slot_shared:
         name += "-" + slot["refvar"]
     return name
+
 
 def get_slot_id(slot, schema_slot_counter, schema_id, slot_shared):
     slot_name = get_slot_name(slot, slot_shared)
@@ -34,21 +38,25 @@ def get_slot_id(slot, schema_slot_counter, schema_id, slot_shared):
 def get_slot_constraints(constraints):
     return [f"kairos:{x}" for x in constraints]
 
+
 def get_step_id(step, schema_id):
     return f"{schema_id}/Steps/{step['id']}"
+
 
 def convert_yaml_to_sdf(yaml_file, assigned_info):
     """
     yaml_file: the input yaml file
     assigned_info: the schema id, descriptions are assigned manually
     """
-    # assigned_info["schema_name"] = ''.join([' ' + x if x.isupper() else x for x in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
-    # assigned_info["schema_name"] = assigned_info["schema_name"][0] + assigned_info["schema_name"][1:].lower()
+    # assigned_info["schema_name"] = ''.join([' ' + x if x.isupper() else x for x
+    #                                         in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
+    # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
+    #                                assigned_info["schema_name"][1:].lower()
     schema = OrderedDict([
         ("@id", assigned_info["schema_id"]),
         ("comment", ''),
         ("super", "kairos:Event"),
-        ("name", assigned_info["schema_name"]), 
+        ("name", assigned_info["schema_name"]),
         ("description", assigned_info["schema_dscpt"]),
         ("version", "6/2/2020"),
         ("steps", []),
@@ -61,9 +69,9 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
 
     # get comments
     comments = [x["id"].replace("-", " ") for x in ds["steps"]]
-    comments = ["Steps:"] + [f"{idx + 1}. {text}" for idx, text in enumerate(comments)]   
+    comments = ["Steps:"] + [f"{idx + 1}. {text}" for idx, text in enumerate(comments)]
     schema["comment"] = comments
-    
+
     # get steps
     steps = []
 
@@ -77,22 +85,22 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
 
     for idx, step in enumerate(ds["steps"]):
         cur_step = {
-            "@id": get_step_id(step, schema["@id"]), 
-            "@type": get_step_type(step), 
+            "@id": get_step_id(step, schema["@id"]),
+            "@type": get_step_type(step),
             "comment": comments[idx + 1],
         }
         if "provenance" in step:
             cur_step["provenance"] = step["provenance"]
-        
-        step_map[step["id"]] = {"id": cur_step["@id"], "step_idx": idx+1}
+
+        step_map[step["id"]] = {"id": cur_step["@id"], "step_idx": idx + 1}
 
         slots = []
         for sidx, slot in enumerate(step["slots"]):
             slot_shared = sum([slot["role"] == sl["role"] for sl in step["slots"]]) > 1
 
             cur_slot = {
-                "name": get_slot_name(slot, slot_shared), 
-                "@id": get_slot_id(slot, schema_slot_counter, schema["@id"], slot_shared), 
+                "name": get_slot_name(slot, slot_shared),
+                "@id": get_slot_id(slot, schema_slot_counter, schema["@id"], slot_shared),
                 "role": get_slot_role(slot, cur_step["@type"]),
             }
 
@@ -109,7 +117,7 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
             else:
                 logging.warning(f"{slot} misses refvar")
                 entity_map[cur_slot["@id"]] = str(random.random())
-        
+
         cur_step["slots"] = slots
         steps.append(cur_step)
 
@@ -156,11 +164,11 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
     entity_relations = []
     for v in reverse_entity_map.values():
         cur_entity_relation = {
-        "relationSubject": v[0],
-        "relations": [{
-            "relationPredicate": "kairos:Relations/sameAs",
-            "relationObject": x
-        } for x in v[1:]]
+            "relationSubject": v[0],
+            "relations": [{
+                "relationPredicate": "kairos:Relations/sameAs",
+                "relationObject": x
+            } for x in v[1:]]
         }
         if cur_entity_relation["relations"]:
             entity_relations.append(cur_entity_relation)
@@ -178,7 +186,7 @@ def merge_schemas(schema_list, save_file):
         ("xsd", "http://www.w3.org/2001/XMLSchema#"),
         ("kairos", "https://kairos-sdf.s3.amazonaws.com/context/kairos#"),
         ("schemas", "kairos:schemas"),
-        ("super", { "@id": "kairos:super", "@type": "@id" }),
+        ("super", {"@id": "kairos:super", "@type": "@id"}),
         ("name", "schema:name"),
         ("comment", "kairos:comment"),
         ("provenance", "kairos:provenance"),
@@ -186,45 +194,45 @@ def merge_schemas(schema_list, save_file):
         ("version", "schema:version"),
         ("sdfVersion", "kairos:sdfVersion"),
         ("privateData", "kairos:privateData"),
-        ("reference", { "@id": "kairos:reference", "@type": "@id" }),
+        ("reference", {"@id": "kairos:reference", "@type": "@id"}),
         ("steps", "kairos:steps"),
         ("slots", "kairos:slots"),
-        ("role", { "@id": "kairos:role", "@type": "@id" }),
+        ("role", {"@id": "kairos:role", "@type": "@id"}),
         ("entityTypes", "kairos:entityTypes"),
         ("values", "kairos:values"),
-        ("confidence", { "@id": "kairos:confidence", "@type": "xsd:float" }),
+        ("confidence", {"@id": "kairos:confidence", "@type": "xsd:float"}),
         ("entityRelations", "kairos:entityRelations"),
-        ("relationSubject", { "@id": "kairos:relationSubject", "@type": "@id" }),
+        ("relationSubject", {"@id": "kairos:relationSubject", "@type": "@id"}),
         ("relationPredicate", "kairos:relationPredicate"),
         ("relationObject", "kairos:relationObject"),
         ("relations", "kairos:relations"),
         ("aka", "kairos:aka"),
         ("temporal", "kairos:temporal"),
-        ("duration", { "@id": "kairos:duration", "@type": "xsd:duration" }),
-        ("startTime", { "@id": "kairos:startTime", "@type": "xsd:dateTime" }),
-        ("endTime", { "@id": "kairos:endTime", "@type": "xsd:dateTime" }),
-        ("absoluteTime", { "@id": "kairos:absoluteTime", "@type": "xsd:dateTime" }),
-        ("minDuration", { "@id": "kairos:minDuration", "@type": "xsd:duration" }),
-        ("maxDuration", { "@id": "kairos:maxDuration", "@type": "xsd:duration" }),
+        ("duration", {"@id": "kairos:duration", "@type": "xsd:duration"}),
+        ("startTime", {"@id": "kairos:startTime", "@type": "xsd:dateTime"}),
+        ("endTime", {"@id": "kairos:endTime", "@type": "xsd:dateTime"}),
+        ("absoluteTime", {"@id": "kairos:absoluteTime", "@type": "xsd:dateTime"}),
+        ("minDuration", {"@id": "kairos:minDuration", "@type": "xsd:duration"}),
+        ("maxDuration", {"@id": "kairos:maxDuration", "@type": "xsd:duration"}),
         ("order", "kairos:order"),
-        ("before", { "@id": "kairos:before", "@type": "@id" }),
-        ("after", { "@id": "kairos:after", "@type": "@id" }),
-        ("container", { "@id": "kairos:container", "@type": "@id" }),
-        ("contained", { "@id": "kairos:contained", "@type": "@id" }),
-        ("overlaps", { "@id": "kairos:overlaps", "@type": "@id" }),
-        ("flags",  "kairos:flags"),
+        ("before", {"@id": "kairos:before", "@type": "@id"}),
+        ("after", {"@id": "kairos:after", "@type": "@id"}),
+        ("container", {"@id": "kairos:container", "@type": "@id"}),
+        ("contained", {"@id": "kairos:contained", "@type": "@id"}),
+        ("overlaps", {"@id": "kairos:overlaps", "@type": "@id"}),
+        ("flags", "kairos:flags"),
         ("aida", "https://darpa.mil/i2o/aida.official.namespace/"),
-        ("cmu",  "http://cs.cmu.edu/~kairos/kairos.cmu.namespace/")
+        ("cmu", "http://cs.cmu.edu/~kairos/kairos.cmu.namespace/")
     ])
     sdf["schemas"] = schema_list
     sdf["sdfVersion"] = "0.7"
 
     json.dump(sdf, open(save_file, "w+"), indent=4)
 
-# %% 
-if __name__ == "__main__":
 
-    ## ied.json
+# %%
+if __name__ == "__main__":
+    # ied.json
     fname = "ied"
     assigned_info = {
         "schema_id": "cmu:make-ied",
@@ -238,8 +246,7 @@ if __name__ == "__main__":
     save_file = os.path.join("output", "ied.json")
     merge_schemas([out_json], save_file)
 
-
-    ## vbied.json
+    # vbied.json
     sch_list = []
     assigned_info = {
         "schema_id": "cmu:make-vbied-purchaseExpl",
@@ -261,9 +268,8 @@ if __name__ == "__main__":
 
     save_file = os.path.join("output", "vbied.json")
     merge_schemas(sch_list, save_file)
-    
-            
-    ## dbied.json
+
+    # dbied.json
     sch_list = []
     assigned_info = {
         "schema_id": "cmu:make-dbied-purchaseExpl",
@@ -285,5 +291,3 @@ if __name__ == "__main__":
 
     save_file = os.path.join("output", "dbied.json")
     merge_schemas(sch_list, save_file)
-
-

@@ -1,6 +1,6 @@
-import os
-import json
 import argparse
+import json
+
 import yaml
 
 
@@ -21,13 +21,12 @@ def search_and_tag(sc_obj, target_slot, val):
 def parse_arguments():
     # Argument parsing
     parser = argparse.ArgumentParser(
-        description=
-            "Convert SDF (0.7) to YAML and print to stdout, for easier read. Might omit"
-            "some fields in original json..."
-        )
+        description="Convert SDF (0.7) to YAML and print to stdout, for easier read. Might omit"
+                    "some fields in original json..."
+    )
     parser.add_argument("sdf_path",
-        type=str,
-        help="path to SDF json file")
+                        type=str,
+                        help="path to SDF json file")
 
     return parser.parse_args()
 
@@ -40,9 +39,10 @@ if __name__ == "__main__":
 
     yaml_obj = {}
 
-    if "ta2" in data: yaml_obj["ta2"] = data["ta2"]
+    if "ta2" in data:
+        yaml_obj["ta2"] = data["ta2"]
 
-    if "schemas" in data: 
+    if "schemas" in data:
         yaml_obj["schemas"] = []
 
         for sch in data["schemas"]:
@@ -53,7 +53,8 @@ if __name__ == "__main__":
                 "description": sch["description"],
                 "steps": []
             }
-            if "comment" in sch: sc_obj["comment"] = sch["comment"]
+            if "comment" in sch:
+                sc_obj["comment"] = sch["comment"]
 
             if "slots" in sch:
                 sc_obj["slots"] = []
@@ -65,7 +66,8 @@ if __name__ == "__main__":
 
                     opt_fields = ["name", "super", "entityTypes", "reference", "provenance", "aka"]
                     for field in opt_fields:
-                        if field in slt: sl_obj[field] = slt[field]
+                        if field in slt:
+                            sl_obj[field] = slt[field]
 
                     sc_obj["slots"].append(sl_obj)
 
@@ -81,8 +83,9 @@ if __name__ == "__main__":
                     "startTime", "endTime", "absoluteTime", "minDuration", "maxDuration"
                 ]
                 for field in opt_fields:
-                    if field in stp: st_obj[field] = stp[field]
-                
+                    if field in stp:
+                        st_obj[field] = stp[field]
+
                 for slt in stp["slots"]:
                     sl_obj = {
                         "id": slt["@id"],
@@ -90,11 +93,13 @@ if __name__ == "__main__":
                         "role": slt["role"].split("/")[-1]
                     }
                     if "values" in slt:
-                        if slt["values"] and len(slt["values"]) > 0: sl_obj["values"] = slt["values"]
+                        if slt["values"] and len(slt["values"]) > 0:
+                            sl_obj["values"] = slt["values"]
 
                     opt_fields = ["entityTypes", "reference", "provenance", "aka"]
                     for field in opt_fields:
-                        if field in slt: sl_obj[field] = slt[field]
+                        if field in slt:
+                            sl_obj[field] = slt[field]
 
                     st_obj["slots"].append(sl_obj)
 
@@ -123,17 +128,21 @@ if __name__ == "__main__":
             for rels in sch["entityRelations"]:
                 has_corefs = False
                 for r in rels["relations"]:
-                    if r["relationPredicate"] == "kairos:Relations/sameAs": has_corefs = True
-                    if r["relationPredicate"] == "kairos:primitives/Relations/SameAs": has_corefs = True
+                    if r["relationPredicate"] == "kairos:Relations/sameAs":
+                        has_corefs = True
+                    if r["relationPredicate"] == "kairos:primitives/Relations/SameAs":
+                        has_corefs = True
 
-                if not has_corefs: continue
+                if not has_corefs:
+                    continue
 
                 search_and_tag(sc_obj, rels["relationSubject"], str(refVar_counter))
                 for r in rels["relations"]:
                     confVal = f" (conf.: {r['confidence']})" if "confidence" in r else ""
-                    if r["relationPredicate"] == "kairos:Relations/sameAs" or r["relationPredicate"] == "kairos:primitives/Relations/SameAs":
+                    if r["relationPredicate"] == "kairos:Relations/sameAs" or r[
+                        "relationPredicate"] == "kairos:primitives/Relations/SameAs":
                         search_and_tag(sc_obj, r["relationObject"], str(refVar_counter) + confVal)
-                
+
                 refVar_counter += 1
 
             # Prune or shorten ids for easier read
@@ -163,7 +172,8 @@ if __name__ == "__main__":
                 "comment", "aka", "minDuration", "maxDuration"
             ]
             for field in opt_fields:
-                if field in prm: pm_obj[field] = prm[field]
+                if field in prm:
+                    pm_obj[field] = prm[field]
 
             for slt in prm["slots"]:
                 sl_obj = {
@@ -173,7 +183,8 @@ if __name__ == "__main__":
 
                 opt_fields = ["entityTypes", "reference", "provenance", "aka"]
                 for field in opt_fields:
-                    if field in slt: sl_obj[field] = slt[field]
+                    if field in slt:
+                        sl_obj[field] = slt[field]
 
                 pm_obj["slots"].append(sl_obj)
 
