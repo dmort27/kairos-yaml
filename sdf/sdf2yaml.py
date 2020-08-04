@@ -179,4 +179,4 @@ if __name__ == "__main__":
 
             yaml_obj["primitives"].append(pm_obj)
 
-    print(yaml.dump(yaml_obj, default_flow_style=False))
+    print(yaml.dump(yaml_obj, default_flow_style=False, sort_keys=False))
