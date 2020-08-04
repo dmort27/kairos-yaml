@@ -232,10 +232,10 @@ if __name__ == "__main__":
         "schema_dscpt": "General description of making IED"
     }
 
-    yaml_file = os.path.join("../", "yaml", "factored", "ied.yaml")
+    yaml_file = os.path.join("examples/q2/ta1", "ied.yaml")
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
 
-    save_file = os.path.join("../", "sdf", "ied.json")
+    save_file = os.path.join("output", "ied.json")
     merge_schemas([out_json], save_file)
 
 
@@ -246,7 +246,7 @@ if __name__ == "__main__":
         "schema_name": "VBIED Manufacture (explosives purchased)",
         "schema_dscpt": "Description of making vehicle-based IED, when explosives are purchased"
     }
-    yaml_file = os.path.join("../", "yaml", "factored", "vbied-buy-explosives.yaml")
+    yaml_file = os.path.join("examples/q2/ta1", "vbied-buy-explosives.yaml")
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
@@ -255,11 +255,11 @@ if __name__ == "__main__":
         "schema_name": "VBIED Manufacture (explosives manufactured)",
         "schema_dscpt": "Description of making vehicle-based IED, when explosives are manufactured"
     }
-    yaml_file = os.path.join("../", "yaml", "factored", "vbied-manufacture-explosives.yaml")
+    yaml_file = os.path.join("examples/q2/ta1", "vbied-manufacture-explosives.yaml")
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
-    save_file = os.path.join("../", "sdf", "vbied.json")
+    save_file = os.path.join("output", "vbied.json")
     merge_schemas(sch_list, save_file)
     
             
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         "schema_name": "DBIED Manufacture (explosives purchased)",
         "schema_dscpt": "Description of making drone-based IED, when explosives are purchased"
     }
-    yaml_file = os.path.join("../", "yaml", "factored", "dbied-buy-explosives.yaml")
+    yaml_file = os.path.join("examples/q2/ta1", "dbied-buy-explosives.yaml")
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
@@ -279,11 +279,11 @@ if __name__ == "__main__":
         "schema_name": "DBIED Manufacture (explosives manufactured)",
         "schema_dscpt": "Description of making drone-based IED, when explosives are manufactured"
     }
-    yaml_file = os.path.join("../", "yaml", "factored", "dbied-manufacture-explosives.yaml")
+    yaml_file = os.path.join("examples/q2/ta1", "dbied-manufacture-explosives.yaml")
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
-    save_file = os.path.join("../", "sdf", "dbied.json")
+    save_file = os.path.join("output", "dbied.json")
     merge_schemas(sch_list, save_file)
 
 
