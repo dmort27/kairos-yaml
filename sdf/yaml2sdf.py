@@ -55,7 +55,7 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
         ("order", []),
         ("entityRelations", [])
     ])
-    ds = yaml.load(open(yaml_file), Loader=yaml.FullLoader)    
+    ds = yaml.safe_load(open(yaml_file))
     assert len(ds) == 1
     ds = ds[0]
 
