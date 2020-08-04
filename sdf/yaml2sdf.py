@@ -1,26 +1,53 @@
-# %%
-from collections import Counter, OrderedDict, defaultdict
+"""Converts CMU YAML into KAIROS SDF JSON-LD."""
+
+from collections import Counter, defaultdict
 import json
 import logging
 import os
 import random
+import typing
+from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import yaml
 
 
-# %%
+def get_step_type(step: Mapping[str, Any]) -> str:
+    """Gets type of step.
 
-def get_step_type(step):
-    # TODO sanity check whether the type exists the ontology?
+    Args:
+        step: Step data.
+
+    Returns:
+        Step type.
+    """
+    # TODO: Sanity check whether the type exists the ontology?
     return f"kairos:Primitives/{step['primitive']}"
 
 
-def get_slot_role(slot, step_type=None):
-    # TODO sanity check whether the role exists the ontology?
+def get_slot_role(slot: Mapping[str, Any], step_type: Optional[str] = None) -> str:
+    """Gets slot role.
+
+    Args:
+        slot: Slot data.
+        step_type: Type of step.
+
+    Returns:
+        Slot role.
+    """
+    # TODO: Sanity check whether the role exists the ontology?
     return f"{step_type}/Roles/{slot['role']}"
 
 
-def get_slot_name(slot, slot_shared):
+def get_slot_name(slot: Mapping[str, Any], slot_shared: bool) -> str:
+    """Gets slot name.
+
+    Args:
+        slot: Slot data.
+        slot_shared: Whether slot is shared.
+
+    Returns:
+        Slot name.
+    """
     name = "".join([' ' + x if x.isupper() else x for x in slot["role"]]).lstrip()
     name = name.split()[0].lower()
     if slot_shared:
@@ -28,63 +55,97 @@ def get_slot_name(slot, slot_shared):
     return name
 
 
-def get_slot_id(slot, schema_slot_counter, schema_id, slot_shared):
+def get_slot_id(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str],
+                schema_id: str, slot_shared: bool) -> str:
+    """Gets slot ID.
+
+    Args:
+        slot: Slot data.
+        schema_slot_counter: Slot counter.
+        schema_id: Schema ID.
+        slot_shared: Whether slot is shared.
+
+    Returns:
+        Slot ID.
+    """
     slot_name = get_slot_name(slot, slot_shared)
     slot_id = chr(schema_slot_counter[slot_name] + 97)
     schema_slot_counter[slot_name] += 1
     return f"{schema_id}/Slots/{slot_name}-{slot_id}"
 
 
-def get_slot_constraints(constraints):
+def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
+    """Gets slot constraints.
+
+    Args:
+        constraints: Constraints.
+
+    Returns:
+        Slot constraints.
+    """
     return [f"kairos:{x}" for x in constraints]
 
 
-def get_step_id(step, schema_id):
+def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
+    """Gets step ID.
+
+    Args:
+        step: Step data.
+        schema_id: Schema ID.
+
+    Returns:
+        Step ID.
+    """
     return f"{schema_id}/Steps/{step['id']}"
 
 
-def convert_yaml_to_sdf(yaml_file, assigned_info):
-    """
-    yaml_file: the input yaml file
-    assigned_info: the schema id, descriptions are assigned manually
+def convert_yaml_to_sdf(yaml_file: str, assigned_info: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Converts YAML to SDF.
+
+    Args:
+        yaml_file: Input YAML file.
+        assigned_info: The schema ID, descriptions are assigned manually.
+
+    Returns:
+        Schema in SDF format.
     """
     # assigned_info["schema_name"] = ''.join([' ' + x if x.isupper() else x for x
     #                                         in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
     # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
     #                                assigned_info["schema_name"][1:].lower()
-    schema = OrderedDict([
-        ("@id", assigned_info["schema_id"]),
-        ("comment", ''),
-        ("super", "kairos:Event"),
-        ("name", assigned_info["schema_name"]),
-        ("description", assigned_info["schema_dscpt"]),
-        ("version", "6/2/2020"),
-        ("steps", []),
-        ("order", []),
-        ("entityRelations", [])
-    ])
+    schema = {
+        "@id": assigned_info["schema_id"],
+        "comment": '',
+        "super": "kairos:Event",
+        "name": assigned_info["schema_name"],
+        "description": assigned_info["schema_dscpt"],
+        "version": "6/2/2020",
+        "steps": [],
+        "order": [],
+        "entityRelations": []
+    }
     ds = yaml.safe_load(open(yaml_file))
     assert len(ds) == 1
     ds = ds[0]
 
-    # get comments
+    # Get comments
     comments = [x["id"].replace("-", " ") for x in ds["steps"]]
     comments = ["Steps:"] + [f"{idx + 1}. {text}" for idx, text in enumerate(comments)]
     schema["comment"] = comments
 
-    # get steps
+    # Get steps
     steps = []
 
-    # for sameAs relation
+    # For sameAs relation
     entity_map = {}
-    # for order
-    step_map = defaultdict(lambda: defaultdict(str))
+    # For order
+    step_map: Dict[str, Dict[str, Union[int, str]]] = {}
 
-    # for naming slot id
-    schema_slot_counter = Counter()
+    # For naming slot ID
+    schema_slot_counter: typing.Counter[str] = Counter()
 
     for idx, step in enumerate(ds["steps"]):
-        cur_step = {
+        cur_step: Dict[str, Any] = {
             "@id": get_step_id(step, schema["@id"]),
             "@type": get_step_type(step),
             "comment": comments[idx + 1],
@@ -95,10 +156,10 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
         step_map[step["id"]] = {"id": cur_step["@id"], "step_idx": idx + 1}
 
         slots = []
-        for sidx, slot in enumerate(step["slots"]):
+        for slot in step["slots"]:
             slot_shared = sum([slot["role"] == sl["role"] for sl in step["slots"]]) > 1
 
-            cur_slot = {
+            cur_slot: Dict[str, Any] = {
                 "name": get_slot_name(slot, slot_shared),
                 "@id": get_slot_id(slot, schema_slot_counter, schema["@id"], slot_shared),
                 "role": get_slot_role(slot, cur_step["@type"]),
@@ -111,7 +172,7 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
                 cur_slot["reference"] = slot["reference"]
             slots.append(cur_slot)
 
-            # get entity ID for relations
+            # Get entity ID for relations
             if "refvar" in slot:
                 entity_map[cur_slot["@id"]] = slot["refvar"]
             else:
@@ -121,7 +182,7 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
         cur_step["slots"] = slots
         steps.append(cur_step)
 
-    # Cleaning "-a" suffix for slots with counter == 1. Just my OCD...
+    # Cleaning "-a" suffix for slots with counter == 1.
     for step in steps:
         for slot in step["slots"]:
             if schema_slot_counter[slot["name"]] == 1:
@@ -145,9 +206,11 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
                 logging.warning(f"before: {order['before']} does not appear in the steps")
             if not after_id and not after_idx:
                 logging.warning(f"after: {order['after']} does not appear in the steps")
-            cur_order = {"comment": f"{before_idx} precedes {after_idx}"}
-            cur_order["before"] = before_id
-            cur_order["after"] = after_id
+            cur_order = {
+                "comment": f"{before_idx} precedes {after_idx}",
+                "before": before_id,
+                "after": after_id
+            }
         elif "overlap" in order:
             raise NotImplementedError
         else:
@@ -155,9 +218,9 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
         orders.append(cur_order)
     schema["order"] = orders
 
-    # get entity relations
+    # Get entity relations
     entity_map = {x: y for x, y in entity_map.items() if y is not None}
-    # get same as relation
+    # Get same as relation
     reverse_entity_map = defaultdict(list)
     for k, v in entity_map.items():
         reverse_entity_map[v].append(k)
@@ -177,63 +240,65 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
     return schema
 
 
-# %%
-# merge multiple schemas
-def merge_schemas(schema_list, save_file):
-    sdf = {}
-    sdf["@context"] = OrderedDict([
-        ("schema", "http://schema.org/"),
-        ("xsd", "http://www.w3.org/2001/XMLSchema#"),
-        ("kairos", "https://kairos-sdf.s3.amazonaws.com/context/kairos#"),
-        ("schemas", "kairos:schemas"),
-        ("super", {"@id": "kairos:super", "@type": "@id"}),
-        ("name", "schema:name"),
-        ("comment", "kairos:comment"),
-        ("provenance", "kairos:provenance"),
-        ("description", "schema:description"),
-        ("version", "schema:version"),
-        ("sdfVersion", "kairos:sdfVersion"),
-        ("privateData", "kairos:privateData"),
-        ("reference", {"@id": "kairos:reference", "@type": "@id"}),
-        ("steps", "kairos:steps"),
-        ("slots", "kairos:slots"),
-        ("role", {"@id": "kairos:role", "@type": "@id"}),
-        ("entityTypes", "kairos:entityTypes"),
-        ("values", "kairos:values"),
-        ("confidence", {"@id": "kairos:confidence", "@type": "xsd:float"}),
-        ("entityRelations", "kairos:entityRelations"),
-        ("relationSubject", {"@id": "kairos:relationSubject", "@type": "@id"}),
-        ("relationPredicate", "kairos:relationPredicate"),
-        ("relationObject", "kairos:relationObject"),
-        ("relations", "kairos:relations"),
-        ("aka", "kairos:aka"),
-        ("temporal", "kairos:temporal"),
-        ("duration", {"@id": "kairos:duration", "@type": "xsd:duration"}),
-        ("startTime", {"@id": "kairos:startTime", "@type": "xsd:dateTime"}),
-        ("endTime", {"@id": "kairos:endTime", "@type": "xsd:dateTime"}),
-        ("absoluteTime", {"@id": "kairos:absoluteTime", "@type": "xsd:dateTime"}),
-        ("minDuration", {"@id": "kairos:minDuration", "@type": "xsd:duration"}),
-        ("maxDuration", {"@id": "kairos:maxDuration", "@type": "xsd:duration"}),
-        ("order", "kairos:order"),
-        ("before", {"@id": "kairos:before", "@type": "@id"}),
-        ("after", {"@id": "kairos:after", "@type": "@id"}),
-        ("container", {"@id": "kairos:container", "@type": "@id"}),
-        ("contained", {"@id": "kairos:contained", "@type": "@id"}),
-        ("overlaps", {"@id": "kairos:overlaps", "@type": "@id"}),
-        ("flags", "kairos:flags"),
-        ("aida", "https://darpa.mil/i2o/aida.official.namespace/"),
-        ("cmu", "http://cs.cmu.edu/~kairos/kairos.cmu.namespace/")
-    ])
-    sdf["schemas"] = schema_list
-    sdf["sdfVersion"] = "0.7"
+def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: str) -> None:
+    """Merge multiple schemas.
+    Args:
+        schema_list: List of SDF schemas.
+        save_file: File to save merged schemas in.
+    """
+    sdf = {
+        "@context": {
+            "schema": "http://schema.org/",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "kairos": "https://kairos-sdf.s3.amazonaws.com/context/kairos#",
+            "schemas": "kairos:schemas",
+            "super": {"@id": "kairos:super", "@type": "@id"},
+            "name": "schema:name",
+            "comment": "kairos:comment",
+            "provenance": "kairos:provenance",
+            "description": "schema:description",
+            "version": "schema:version",
+            "sdfVersion": "kairos:sdfVersion",
+            "privateData": "kairos:privateData",
+            "reference": {"@id": "kairos:reference", "@type": "@id"},
+            "steps": "kairos:steps",
+            "slots": "kairos:slots",
+            "role": {"@id": "kairos:role", "@type": "@id"},
+            "entityTypes": "kairos:entityTypes",
+            "values": "kairos:values",
+            "confidence": {"@id": "kairos:confidence", "@type": "xsd:float"},
+            "entityRelations": "kairos:entityRelations",
+            "relationSubject": {"@id": "kairos:relationSubject", "@type": "@id"},
+            "relationPredicate": "kairos:relationPredicate",
+            "relationObject": "kairos:relationObject",
+            "relations": "kairos:relations",
+            "aka": "kairos:aka",
+            "temporal": "kairos:temporal",
+            "duration": {"@id": "kairos:duration", "@type": "xsd:duration"},
+            "startTime": {"@id": "kairos:startTime", "@type": "xsd:dateTime"},
+            "endTime": {"@id": "kairos:endTime", "@type": "xsd:dateTime"},
+            "absoluteTime": {"@id": "kairos:absoluteTime", "@type": "xsd:dateTime"},
+            "minDuration": {"@id": "kairos:minDuration", "@type": "xsd:duration"},
+            "maxDuration": {"@id": "kairos:maxDuration", "@type": "xsd:duration"},
+            "order": "kairos:order",
+            "before": {"@id": "kairos:before", "@type": "@id"},
+            "after": {"@id": "kairos:after", "@type": "@id"},
+            "container": {"@id": "kairos:container", "@type": "@id"},
+            "contained": {"@id": "kairos:contained", "@type": "@id"},
+            "overlaps": {"@id": "kairos:overlaps", "@type": "@id"},
+            "flags": "kairos:flags",
+            "aida": "https://darpa.mil/i2o/aida.official.namespace/",
+            "cmu": "http://cs.cmu.edu/~kairos/kairos.cmu.namespace/"
+        },
+        "schemas": schema_list,
+        "sdfVersion": "0.7"
+    }
 
-    json.dump(sdf, open(save_file, "w+"), indent=4)
+    json.dump(sdf, open(save_file, "w"), indent=4)
 
 
-# %%
-if __name__ == "__main__":
-    # ied.json
-    fname = "ied"
+def main() -> None:
+    # For ied.json
     assigned_info = {
         "schema_id": "cmu:make-ied",
         "schema_name": "IED Manufacture",
@@ -246,7 +311,7 @@ if __name__ == "__main__":
     save_file = os.path.join("output", "ied.json")
     merge_schemas([out_json], save_file)
 
-    # vbied.json
+    # For vbied.json
     sch_list = []
     assigned_info = {
         "schema_id": "cmu:make-vbied-purchaseExpl",
@@ -269,7 +334,7 @@ if __name__ == "__main__":
     save_file = os.path.join("output", "vbied.json")
     merge_schemas(sch_list, save_file)
 
-    # dbied.json
+    # For dbied.json
     sch_list = []
     assigned_info = {
         "schema_id": "cmu:make-dbied-purchaseExpl",
@@ -291,3 +356,7 @@ if __name__ == "__main__":
 
     save_file = os.path.join("output", "dbied.json")
     merge_schemas(sch_list, save_file)
+
+
+if __name__ == "__main__":
+    main()
