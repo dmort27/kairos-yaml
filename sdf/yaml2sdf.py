@@ -47,7 +47,7 @@ def convert_yaml_to_sdf(yaml_file, assigned_info):
     schema = OrderedDict([
         ("@id", assigned_info["schema_id"]),
         ("comment", ''),
-        ("super", None),
+        ("super", "kairos:Event"),
         ("name", assigned_info["schema_name"]), 
         ("description", assigned_info["schema_dscpt"]),
         ("version", "6/2/2020"),
