@@ -3,7 +3,7 @@
 from collections import Counter, defaultdict
 import json
 import logging
-import os
+from pathlib import Path
 import random
 import typing
 from typing import Any, Dict, Mapping, Optional, Sequence, Union
@@ -99,7 +99,7 @@ def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
     return f"{schema_id}/Steps/{step['id']}"
 
 
-def convert_yaml_to_sdf(yaml_file: str, assigned_info: Mapping[str, Any]) -> Mapping[str, Any]:
+def convert_yaml_to_sdf(yaml_file: Path, assigned_info: Mapping[str, Any]) -> Mapping[str, Any]:
     """Converts YAML to SDF.
 
     Args:
@@ -240,7 +240,7 @@ def convert_yaml_to_sdf(yaml_file: str, assigned_info: Mapping[str, Any]) -> Map
     return schema
 
 
-def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: str) -> None:
+def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: Path) -> None:
     """Merge multiple schemas.
     Args:
         schema_list: List of SDF schemas.
@@ -298,6 +298,9 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: str) -> N
 
 
 def main() -> None:
+    input_directory = Path("examples", "q2", "ta1")
+    output_directory = Path("output")
+
     # For ied.json
     assigned_info = {
         "schema_id": "cmu:make-ied",
@@ -305,10 +308,10 @@ def main() -> None:
         "schema_dscpt": "General description of making IED"
     }
 
-    yaml_file = os.path.join("examples/q2/ta1", "ied.yaml")
+    yaml_file = input_directory / "ied.yaml"
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
 
-    save_file = os.path.join("output", "ied.json")
+    save_file = output_directory / "ied.json"
     merge_schemas([out_json], save_file)
 
     # For vbied.json
@@ -318,7 +321,7 @@ def main() -> None:
         "schema_name": "VBIED Manufacture (explosives purchased)",
         "schema_dscpt": "Description of making vehicle-based IED, when explosives are purchased"
     }
-    yaml_file = os.path.join("examples/q2/ta1", "vbied-buy-explosives.yaml")
+    yaml_file = input_directory / "vbied-buy-explosives.yaml"
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
@@ -327,11 +330,11 @@ def main() -> None:
         "schema_name": "VBIED Manufacture (explosives manufactured)",
         "schema_dscpt": "Description of making vehicle-based IED, when explosives are manufactured"
     }
-    yaml_file = os.path.join("examples/q2/ta1", "vbied-manufacture-explosives.yaml")
+    yaml_file = input_directory / "vbied-manufacture-explosives.yaml"
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
-    save_file = os.path.join("output", "vbied.json")
+    save_file = output_directory / "vbied.json"
     merge_schemas(sch_list, save_file)
 
     # For dbied.json
@@ -341,7 +344,7 @@ def main() -> None:
         "schema_name": "DBIED Manufacture (explosives purchased)",
         "schema_dscpt": "Description of making drone-based IED, when explosives are purchased"
     }
-    yaml_file = os.path.join("examples/q2/ta1", "dbied-buy-explosives.yaml")
+    yaml_file = input_directory / "dbied-buy-explosives.yaml"
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
@@ -350,11 +353,11 @@ def main() -> None:
         "schema_name": "DBIED Manufacture (explosives manufactured)",
         "schema_dscpt": "Description of making drone-based IED, when explosives are manufactured"
     }
-    yaml_file = os.path.join("examples/q2/ta1", "dbied-manufacture-explosives.yaml")
+    yaml_file = input_directory / "dbied-manufacture-explosives.yaml"
     out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
     sch_list.append(out_json)
 
-    save_file = os.path.join("output", "dbied.json")
+    save_file = output_directory / "dbied.json"
     merge_schemas(sch_list, save_file)
 
 
