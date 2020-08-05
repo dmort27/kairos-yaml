@@ -99,12 +99,11 @@ def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
     return f"{schema_id}/Steps/{step['id']}"
 
 
-def convert_yaml_to_sdf(yaml_file: Path, assigned_info: Mapping[str, Any]) -> Mapping[str, Any]:
+def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     """Converts YAML to SDF.
 
     Args:
         yaml_file: Input YAML file.
-        assigned_info: The schema ID, descriptions are assigned manually.
 
     Returns:
         Schema in SDF format.
@@ -113,20 +112,21 @@ def convert_yaml_to_sdf(yaml_file: Path, assigned_info: Mapping[str, Any]) -> Ma
     #                                         in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
     # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
     #                                assigned_info["schema_name"][1:].lower()
+    ds = yaml.safe_load(open(yaml_file))
+    assert len(ds) == 1
+    ds = ds[0]
+
     schema = {
-        "@id": assigned_info["schema_id"],
+        "@id": ds["schema_id"],
         "comment": '',
         "super": "kairos:Event",
-        "name": assigned_info["schema_name"],
-        "description": assigned_info["schema_dscpt"],
+        "name": ds["schema_name"],
+        "description": ds["schema_dscpt"],
         "version": "6/2/2020",
         "steps": [],
         "order": [],
         "entityRelations": []
     }
-    ds = yaml.safe_load(open(yaml_file))
-    assert len(ds) == 1
-    ds = ds[0]
 
     # Get comments
     comments = [x["id"].replace("-", " ") for x in ds["steps"]]
@@ -302,36 +302,20 @@ def main() -> None:
     output_directory = Path("output")
 
     # For ied.json
-    assigned_info = {
-        "schema_id": "cmu:make-ied",
-        "schema_name": "IED Manufacture",
-        "schema_dscpt": "General description of making IED"
-    }
-
     yaml_file = input_directory / "ied.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
+    out_json = convert_yaml_to_sdf(yaml_file)
 
     save_file = output_directory / "ied.json"
     merge_schemas([out_json], save_file)
 
     # For vbied.json
     sch_list = []
-    assigned_info = {
-        "schema_id": "cmu:make-vbied-purchaseExpl",
-        "schema_name": "VBIED Manufacture (explosives purchased)",
-        "schema_dscpt": "Description of making vehicle-based IED, when explosives are purchased"
-    }
     yaml_file = input_directory / "vbied-buy-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
+    out_json = convert_yaml_to_sdf(yaml_file)
     sch_list.append(out_json)
 
-    assigned_info = {
-        "schema_id": "cmu:make-vbied-manufactureExpl",
-        "schema_name": "VBIED Manufacture (explosives manufactured)",
-        "schema_dscpt": "Description of making vehicle-based IED, when explosives are manufactured"
-    }
     yaml_file = input_directory / "vbied-manufacture-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
+    out_json = convert_yaml_to_sdf(yaml_file)
     sch_list.append(out_json)
 
     save_file = output_directory / "vbied.json"
@@ -339,22 +323,12 @@ def main() -> None:
 
     # For dbied.json
     sch_list = []
-    assigned_info = {
-        "schema_id": "cmu:make-dbied-purchaseExpl",
-        "schema_name": "DBIED Manufacture (explosives purchased)",
-        "schema_dscpt": "Description of making drone-based IED, when explosives are purchased"
-    }
     yaml_file = input_directory / "dbied-buy-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
+    out_json = convert_yaml_to_sdf(yaml_file)
     sch_list.append(out_json)
 
-    assigned_info = {
-        "schema_id": "cmu:make-dbied-manufactureExpl",
-        "schema_name": "DBIED Manufacture (explosives manufactured)",
-        "schema_dscpt": "Description of making drone-based IED, when explosives are manufactured"
-    }
     yaml_file = input_directory / "dbied-manufacture-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file, assigned_info)
+    out_json = convert_yaml_to_sdf(yaml_file)
     sch_list.append(out_json)
 
     save_file = output_directory / "dbied.json"

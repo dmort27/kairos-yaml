@@ -1,4 +1,7 @@
-- steps:
+- schema_id: "cmu:make-dbied-purchaseExpl"
+  schema_name: "DBIED Manufacture (explosives purchased)"
+  schema_dscpt: "Description of making drone-based IED, when explosives are purchased"
+  steps:
   - id: obtain-drone
     primitive: Transaction.Exchange
     slots:

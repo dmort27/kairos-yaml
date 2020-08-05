@@ -1,5 +1,8 @@
 # Schema for manufacturing VBIEDs
-- steps:
+- schema_id: "cmu:make-vbied-manufactureExpl"
+  schema_name: "VBIED Manufacture (explosives manufactured)"
+  schema_dscpt: "Description of making vehicle-based IED, when explosives are manufactured"
+  steps:
   - id: obtain-vbied-plans
     primitive: 'Transaction.Exchange'
     provenance: 

@@ -1,5 +1,8 @@
 # Schema for manufacture of IEDs
-- steps:
+- schema_id: "cmu:make-ied"
+  schema_name: "IED Manufacture"
+  schema_dscpt: "General description of making IED"
+  steps:
   - id: make-explosive-material
     primitive: ArtifactExistence.Assemble
     slots:
