@@ -99,11 +99,11 @@ def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
     return f"{schema_id}/Steps/{step['id']}"
 
 
-def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
+def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     """Converts YAML to SDF.
 
     Args:
-        yaml_file: Input YAML file.
+        yaml_data: Data from YAML file.
 
     Returns:
         Schema in SDF format.
@@ -112,16 +112,12 @@ def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     #                                         in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
     # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
     #                                assigned_info["schema_name"][1:].lower()
-    ds = yaml.safe_load(open(yaml_file))
-    assert len(ds) == 1
-    ds = ds[0]
-
     schema = {
-        "@id": ds["schema_id"],
+        "@id": yaml_data["schema_id"],
         "comment": '',
         "super": "kairos:Event",
-        "name": ds["schema_name"],
-        "description": ds["schema_dscpt"],
+        "name": yaml_data["schema_name"],
+        "description": yaml_data["schema_dscpt"],
         "version": "6/2/2020",
         "steps": [],
         "order": [],
@@ -129,7 +125,7 @@ def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     }
 
     # Get comments
-    comments = [x["id"].replace("-", " ") for x in ds["steps"]]
+    comments = [x["id"].replace("-", " ") for x in yaml_data["steps"]]
     comments = ["Steps:"] + [f"{idx + 1}. {text}" for idx, text in enumerate(comments)]
     schema["comment"] = comments
 
@@ -144,7 +140,7 @@ def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     # For naming slot ID
     schema_slot_counter: typing.Counter[str] = Counter()
 
-    for idx, step in enumerate(ds["steps"]):
+    for idx, step in enumerate(yaml_data["steps"]):
         cur_step: Dict[str, Any] = {
             "@id": get_step_id(step, schema["@id"]),
             "@type": get_step_type(step),
@@ -196,7 +192,7 @@ def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     schema["steps"] = steps
 
     orders = []
-    for order in ds["order"]:
+    for order in yaml_data["order"]:
         if "before" in order and "after" in order:
             before_idx = step_map[order['before']]['step_idx']
             before_id = step_map[order['before']]['id']
@@ -240,11 +236,14 @@ def convert_yaml_to_sdf(yaml_file: Path) -> Mapping[str, Any]:
     return schema
 
 
-def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: Path) -> None:
+def merge_schemas(schema_list: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
     """Merge multiple schemas.
+
     Args:
         schema_list: List of SDF schemas.
-        save_file: File to save merged schemas in.
+
+    Returns:
+        Data in JSON output format.
     """
     sdf = {
         "@context": {
@@ -294,7 +293,27 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], save_file: Path) -> 
         "sdfVersion": "0.7"
     }
 
-    json.dump(sdf, open(save_file, "w"), indent=4)
+    return sdf
+
+
+def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
+    """Converts YAML files into a single JSON file.
+
+    Args:
+        yaml_files: List of YAML file paths.
+        json_file: JSON file path.
+    """
+    schemas = []
+    for yaml_file in yaml_files:
+        with yaml_file.open() as file:
+            yaml_data = yaml.safe_load(file)
+        for yaml_schema in yaml_data:
+            out_json = convert_yaml_to_sdf(yaml_schema)
+            schemas.append(out_json)
+
+    json_data = merge_schemas(schemas)
+    with json_file.open("w") as file:
+        json.dump(json_data, file, ensure_ascii=True, indent=4)
 
 
 def main() -> None:
@@ -302,37 +321,17 @@ def main() -> None:
     output_directory = Path("output")
 
     # For ied.json
-    yaml_file = input_directory / "ied.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file)
-
-    save_file = output_directory / "ied.json"
-    merge_schemas([out_json], save_file)
+    convert_files([input_directory / "ied.yaml"], output_directory / "ied.json")
 
     # For vbied.json
-    sch_list = []
-    yaml_file = input_directory / "vbied-buy-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file)
-    sch_list.append(out_json)
-
-    yaml_file = input_directory / "vbied-manufacture-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file)
-    sch_list.append(out_json)
-
-    save_file = output_directory / "vbied.json"
-    merge_schemas(sch_list, save_file)
+    convert_files([input_directory / "vbied-buy-explosives.yaml",
+                   input_directory / "vbied-manufacture-explosives.yaml"],
+                  output_directory / "vbied.json")
 
     # For dbied.json
-    sch_list = []
-    yaml_file = input_directory / "dbied-buy-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file)
-    sch_list.append(out_json)
-
-    yaml_file = input_directory / "dbied-manufacture-explosives.yaml"
-    out_json = convert_yaml_to_sdf(yaml_file)
-    sch_list.append(out_json)
-
-    save_file = output_directory / "dbied.json"
-    merge_schemas(sch_list, save_file)
+    convert_files([input_directory / "dbied-buy-explosives.yaml",
+                   input_directory / "dbied-manufacture-explosives.yaml"],
+                  output_directory / "dbied.json")
 
 
 if __name__ == "__main__":
