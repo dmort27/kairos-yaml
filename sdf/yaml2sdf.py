@@ -10,6 +10,18 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
 import yaml
 
+EVENT_ONTOLOGY: Optional[Mapping[str, Any]] = None
+
+
+def get_event_ontology() -> Mapping[str, Any]:
+    global EVENT_ONTOLOGY
+
+    if EVENT_ONTOLOGY is None:
+        with Path("events.json").open() as file:
+            EVENT_ONTOLOGY = json.load(file)
+
+    return EVENT_ONTOLOGY
+
 
 def get_step_type(step: Mapping[str, Any]) -> str:
     """Gets type of step.
@@ -20,7 +32,9 @@ def get_step_type(step: Mapping[str, Any]) -> str:
     Returns:
         Step type.
     """
-    # TODO: Sanity check whether the type exists the ontology?
+    if step['primitive'] not in get_event_ontology():
+        logging.warning(f"Primitive '{step['primitive']}' in step '{step['id']}' not in ontology")
+
     return f"kairos:Primitives/{step['primitive']}"
 
 
