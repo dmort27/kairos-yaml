@@ -4,7 +4,7 @@
   schema_dscpt: "Description of making vehicle-based IED, when explosives are purchased"
   steps:
   - id: obtain-vbied-plans
-    primitive: 'Transaction.Exchange'
+    primitive: 'Transaction.ExchangeBuySell'
     provenance: 
       - VBIED1-sent19
       - VBIED1-sent20
@@ -17,7 +17,7 @@
         refvar: plans
         reference: Q1371819 # plan
   - id: obtain-explosives
-    primitive: 'Transaction.Exchange'
+    primitive: 'Transaction.ExchangeBuySell'
     slots:
       - role: AcquirerOrRecipient
         refvar: attacker
@@ -27,7 +27,7 @@
         constraints: ['COM']
         reference: Q12870 # explosive material
   - id: obtain-vehicle
-    primitive: 'Transaction.Exchange'
+    primitive: 'Transaction.ExchangeBuySell'
     slots:
       - role: AcquirerOrRecipient
         refvar: attacker
@@ -37,7 +37,7 @@
         constraints: ['VEH']
         reference: Q42889
   - id: manufacture-vbied
-    primitive: ArtifactExistence.Assemble
+    primitive: ArtifactExistence.ManufactureAssemble
     provenance:
       - VBIED1-sent28
       - VBIED1-sent29

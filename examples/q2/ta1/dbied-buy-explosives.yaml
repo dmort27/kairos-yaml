@@ -3,7 +3,7 @@
   schema_dscpt: "Description of making drone-based IED, when explosives are purchased"
   steps:
   - id: obtain-drone
-    primitive: Transaction.Exchange
+    primitive: Transaction.ExchangeBuySell
     slots:
     - role: AcquirerOrRecipient
       refvar: attacker
@@ -13,7 +13,7 @@
       constraints: ['COM']
       reference: Q484000 # unmaned aerial vehicle
   - id: obtain-explosives
-    primitive: Transaction.Exchange
+    primitive: Transaction.ExchangeBuySell
     slots:
     - role: AcquirerOrRecipient
       refvar: attacker
@@ -23,7 +23,7 @@
       reference: Q12870 # explosive material
       refvar: explosives
   - id: build-delivery-mechanisms
-    primitive: ArtifactExistence.Assemble
+    primitive: ArtifactExistence.ManufactureAssemble
     provenance:
       - DroneBorneIED1-sent1
       - DroneBorneIED1-sent33
@@ -39,7 +39,7 @@
       refvar: mechanism
       reference: Q517596 # mechanism
   - id: attach-payload
-    primitive: ArtifactExistence.Assemble
+    primitive: ArtifactExistence.ManufactureAssemble
     provenance:
       - JC002YBTX.png
     slots:

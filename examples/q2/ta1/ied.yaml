@@ -4,7 +4,7 @@
   schema_dscpt: "General description of making IED"
   steps:
   - id: make-explosive-material
-    primitive: ArtifactExistence.Assemble
+    primitive: ArtifactExistence.ManufactureAssemble
     slots:
       - role: Agent
         refvar: attacker
@@ -14,7 +14,7 @@
         constraints: ['COM']
         reference: Q12870 # explosive material
   - id: obtain-container
-    primitive: Transaction.Exchange
+    primitive: Transaction.ExchangeBuySell
     slots:
       - role: AcquirerOrRecipient
         refvar: attacker
@@ -24,7 +24,7 @@
         constraints: ['COM']
         reference: Q740460 # Pressure vessel
   - id: obtain-shrapnel
-    primitive: Transaction.Exchange
+    primitive: Transaction.ExchangeBuySell
     slots:
       - role: AcquirerOrRecipient
         refvar: attacker
@@ -34,7 +34,7 @@
         constraints: ['COM']
         reference: Q37077
   - id: assemble-bomb
-    primitive: ArtifactExistence.Assemble
+    primitive: ArtifactExistence.ManufactureAssemble
     provenance:
       - IED1-sent40
       - IED1-sent61
