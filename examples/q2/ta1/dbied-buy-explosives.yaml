@@ -5,7 +5,7 @@
   - id: obtain-drone
     primitive: Transaction.ExchangeBuySell
     slots:
-    - role: AcquirerOrRecipient
+    - role: Recipient
       refvar: attacker
       constraints: ['PER', 'ORG', 'SID']
     - role: AcquiredEntity
@@ -15,7 +15,7 @@
   - id: obtain-explosives
     primitive: Transaction.ExchangeBuySell
     slots:
-    - role: AcquirerOrRecipient
+    - role: Recipient
       refvar: attacker
       constraints: ['PER', 'ORG', 'SID']
     - role: AcquiredEntity
@@ -31,10 +31,10 @@
       - JC002YBTE.jpg
       - JC002YBTW.png
     slots:
-    - role: Agent
+    - role: ManufacturerAssembler
       refvar: attacker
       constraints: ['PER', 'ORG', 'SID']
-    - role: Result
+    - role: Artifact
       constraints: ['COM']
       refvar: mechanism
       reference: Q517596 # mechanism
@@ -43,7 +43,7 @@
     provenance:
       - JC002YBTX.png
     slots:
-    - role: Agent
+    - role: ManufacturerAssembler
       constraints: ['PER', 'ORG', 'SID']
     - role: Components
       refvar: explosives
@@ -54,7 +54,7 @@
     - role: Components
       refvar: mechanism
       constraints: ['COM']
-    - role: Result
+    - role: Artifact
       constraints: ['WEA']
       reference: Q1249453 # improvised explosive device
   order:

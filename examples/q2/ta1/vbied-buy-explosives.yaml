@@ -9,7 +9,7 @@
       - VBIED1-sent19
       - VBIED1-sent20
     slots:
-      - role: AcquirerOrRecipient
+      - role: Recipient
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: AcquiredEntity
@@ -19,17 +19,17 @@
   - id: obtain-explosives
     primitive: 'Transaction.ExchangeBuySell'
     slots:
-      - role: AcquirerOrRecipient
+      - role: Recipient
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
-      - role: Artifact
+      - role: AcquiredEntity
         refvar: explosives
         constraints: ['COM']
         reference: Q12870 # explosive material
   - id: obtain-vehicle
     primitive: 'Transaction.ExchangeBuySell'
     slots:
-      - role: AcquirerOrRecipient
+      - role: Recipient
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: AcquiredEntity
@@ -42,7 +42,7 @@
       - VBIED1-sent28
       - VBIED1-sent29
     slots:
-      - role: Agent
+      - role: ManufacturerAssembler
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: Components
@@ -54,7 +54,7 @@
       - role: Instrument
         constraints: ['ABS']
         refvar: plan
-      - role: Result
+      - role: Artifact
         constraints: ['WEA']
         reference: Q11244 # car bomb
   order:

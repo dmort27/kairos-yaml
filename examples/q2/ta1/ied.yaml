@@ -6,17 +6,17 @@
   - id: make-explosive-material
     primitive: ArtifactExistence.ManufactureAssemble
     slots:
-      - role: Agent
+      - role: ManufacturerAssembler
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
-      - role: Result
+      - role: Artifact
         refvar: explosives
         constraints: ['COM']
         reference: Q12870 # explosive material
   - id: obtain-container
     primitive: Transaction.ExchangeBuySell
     slots:
-      - role: AcquirerOrRecipient
+      - role: Recipient
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: AcquiredEntity
@@ -26,7 +26,7 @@
   - id: obtain-shrapnel
     primitive: Transaction.ExchangeBuySell
     slots:
-      - role: AcquirerOrRecipient
+      - role: Recipient
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: AcquiredEntity
@@ -39,7 +39,7 @@
       - IED1-sent40
       - IED1-sent61
     slots:
-      - role: Agent
+      - role: ManufacturerAssembler
         refvar: attacker
         constraints: ['PER', 'ORG', 'SID']
       - role: Components
@@ -51,7 +51,7 @@
       - role: Components
         refvar: explosives
         constraints: ['COM']
-      - role: Result
+      - role: Artifact
         refvar: bomb
         constraints: ['COM']
         reference: Q127197 # bomb
