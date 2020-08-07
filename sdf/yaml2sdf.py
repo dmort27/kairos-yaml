@@ -38,7 +38,7 @@ def get_step_type(step: Mapping[str, Any]) -> str:
     return f"kairos:Primitives/{step['primitive']}"
 
 
-def get_slot_role(slot: Mapping[str, Any], step_type: Optional[str] = None) -> str:
+def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
     """Gets slot role.
 
     Args:
@@ -48,7 +48,10 @@ def get_slot_role(slot: Mapping[str, Any], step_type: Optional[str] = None) -> s
     Returns:
         Slot role.
     """
-    # TODO: Sanity check whether the role exists the ontology?
+    event_type = get_event_ontology().get(step_type.split("/")[-1], None)
+    if event_type is not None and slot['role'] not in event_type['args']:
+        logging.warning(f"Role '{slot['role']}' is not valid for event '{event_type['type']}'")
+
     return f"{step_type}/Roles/{slot['role']}"
 
 

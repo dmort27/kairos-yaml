@@ -31,7 +31,7 @@ def read_events(sheet: pd.DataFrame) -> JsonObject:
             "definition": row["Definition"],
             "template": row["Template"],
             "args": {
-                f"arg{i}": {
+                row[f"arg{i} label"]: {
                     "position": f"arg{i}",
                     "label": row[f"arg{i} label"],
                     "constraints": row[f"arg{i} type constraints"],
