@@ -1,5 +1,6 @@
 """Converts CMU YAML into KAIROS SDF JSON-LD."""
 
+import argparse
 from collections import Counter, defaultdict
 import json
 import logging
@@ -322,21 +323,14 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
 
 
 def main() -> None:
-    input_directory = Path("examples", "q2", "ta1")
-    output_directory = Path("output")
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument("--input-files", nargs="+", type=Path, required=True,
+                   help="Paths to input YAML schemas.")
+    p.add_argument("--output-file", type=Path, required=True,
+                   help="Path to output JSON schema.")
+    args = p.parse_args()
 
-    # For ied.json
-    convert_files([input_directory / "ied.yaml"], output_directory / "ied.json")
-
-    # For vbied.json
-    convert_files([input_directory / "vbied-buy-explosives.yaml",
-                   input_directory / "vbied-manufacture-explosives.yaml"],
-                  output_directory / "vbied.json")
-
-    # For dbied.json
-    convert_files([input_directory / "dbied-buy-explosives.yaml",
-                   input_directory / "dbied-manufacture-explosives.yaml"],
-                  output_directory / "dbied.json")
+    convert_files(args.input_files, args.output_file)
 
 
 if __name__ == "__main__":
