@@ -22,9 +22,7 @@ def read_events(sheet: pd.DataFrame) -> JsonObject:
     events = {}
     for row in sheet.iterrows():
         row = row[1]
-        event_type = ".".join(
-            t for t in [row["Type"], row["Subtype"], row["Sub-subtype"]] if t != "Unspecified"
-        )
+        event_type = ".".join([row["Type"], row["Subtype"], row["Sub-subtype"]])
         event = {
             "id": row["AnnotIndexID"],
             "type": event_type,

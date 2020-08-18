@@ -32,10 +32,16 @@ def get_step_type(step: Mapping[str, Any]) -> str:
     Returns:
         Step type.
     """
-    if step['primitive'] not in get_event_ontology():
+    # Add missing "Unspecified"s
+    primitive = step["primitive"].split(".")
+    if len(primitive) < 3:
+        primitive.extend(["Unspecified"] * (3 - len(primitive)))
+    primitive = ".".join(primitive)
+
+    if primitive not in get_event_ontology():
         logging.warning(f"Primitive '{step['primitive']}' in step '{step['id']}' not in ontology")
 
-    return f"kairos:Primitives/{step['primitive']}"
+    return f"kairos:Primitives/Events/{primitive}"
 
 
 def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
