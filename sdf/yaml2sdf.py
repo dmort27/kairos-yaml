@@ -259,61 +259,21 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     return schema
 
 
-def merge_schemas(schema_list: Sequence[Mapping[str, Any]]) -> Mapping[str, Any]:
+def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> Mapping[str, Any]:
     """Merge multiple schemas.
 
     Args:
         schema_list: List of SDF schemas.
+        schema_id: ID of schema collection.
 
     Returns:
         Data in JSON output format.
     """
     sdf = {
-        "@context": {
-            "schema": "http://schema.org/",
-            "xsd": "http://www.w3.org/2001/XMLSchema#",
-            "kairos": "https://kairos-sdf.s3.amazonaws.com/context/kairos#",
-            "schemas": "kairos:schemas",
-            "super": {"@id": "kairos:super", "@type": "@id"},
-            "name": "schema:name",
-            "comment": "kairos:comment",
-            "provenance": "kairos:provenance",
-            "description": "schema:description",
-            "version": "schema:version",
-            "sdfVersion": "kairos:sdfVersion",
-            "privateData": "kairos:privateData",
-            "reference": {"@id": "kairos:reference", "@type": "@id"},
-            "steps": "kairos:steps",
-            "slots": "kairos:slots",
-            "role": {"@id": "kairos:role", "@type": "@id"},
-            "entityTypes": "kairos:entityTypes",
-            "values": "kairos:values",
-            "confidence": {"@id": "kairos:confidence", "@type": "xsd:float"},
-            "entityRelations": "kairos:entityRelations",
-            "relationSubject": {"@id": "kairos:relationSubject", "@type": "@id"},
-            "relationPredicate": "kairos:relationPredicate",
-            "relationObject": "kairos:relationObject",
-            "relations": "kairos:relations",
-            "aka": "kairos:aka",
-            "temporal": "kairos:temporal",
-            "duration": {"@id": "kairos:duration", "@type": "xsd:duration"},
-            "startTime": {"@id": "kairos:startTime", "@type": "xsd:dateTime"},
-            "endTime": {"@id": "kairos:endTime", "@type": "xsd:dateTime"},
-            "absoluteTime": {"@id": "kairos:absoluteTime", "@type": "xsd:dateTime"},
-            "minDuration": {"@id": "kairos:minDuration", "@type": "xsd:duration"},
-            "maxDuration": {"@id": "kairos:maxDuration", "@type": "xsd:duration"},
-            "order": "kairos:order",
-            "before": {"@id": "kairos:before", "@type": "@id"},
-            "after": {"@id": "kairos:after", "@type": "@id"},
-            "container": {"@id": "kairos:container", "@type": "@id"},
-            "contained": {"@id": "kairos:contained", "@type": "@id"},
-            "overlaps": {"@id": "kairos:overlaps", "@type": "@id"},
-            "flags": "kairos:flags",
-            "aida": "https://darpa.mil/i2o/aida.official.namespace/",
-            "cmu": "http://cs.cmu.edu/~kairos/kairos.cmu.namespace/"
-        },
+        "@context": ["https://kairos-sdf.s3.amazonaws.com/context/kairos-v0.8.jsonld"],
+        "sdfVersion": "0.8",
+        "@id": schema_id,
         "schemas": schema_list,
-        "sdfVersion": "0.7"
     }
 
     return sdf
@@ -334,7 +294,7 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
             out_json = convert_yaml_to_sdf(yaml_schema)
             schemas.append(out_json)
 
-    json_data = merge_schemas(schemas)
+    json_data = merge_schemas(schemas, json_file.stem)
     with json_file.open("w") as file:
         json.dump(json_data, file, ensure_ascii=True, indent=4)
 
