@@ -58,7 +58,7 @@ def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
     if event_type is not None and slot['role'] not in event_type['args']:
         logging.warning(f"Role '{slot['role']}' is not valid for event '{event_type['type']}'")
 
-    return f"{step_type}/Roles/{slot['role']}"
+    return f"{step_type}/Slots/{slot['role']}"
 
 
 def get_slot_name(slot: Mapping[str, Any], slot_shared: bool) -> str:
@@ -106,7 +106,7 @@ def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
     Returns:
         Slot constraints.
     """
-    return [f"kairos:{x}" for x in constraints]
+    return [f"kairos:Primitives/Entities/{x}" for x in constraints]
 
 
 def create_slot(slot: Mapping[str, Any], schema_slot_counter, schema_id, step_type, slot_shared: bool, entity_map):
@@ -190,9 +190,13 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     for idx, step in enumerate(yaml_data["steps"]):
         cur_step: Dict[str, Any] = {
             "@id": get_step_id(step, schema["@id"]),
+            "name": step["id"],
             "@type": get_step_type(step),
             "comment": comments[idx + 1],
         }
+        if "comment" in step:
+            cur_step["comment"] += "\n" + step["comment"]
+
         if "provenance" in step:
             cur_step["provenance"] = step["provenance"]
 
@@ -262,16 +266,16 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     for k, v in entity_map.items():
         reverse_entity_map[v].append(k)
     entity_relations = []
-    for v in reverse_entity_map.values():
-        cur_entity_relation = {
-            "relationSubject": v[0],
-            "relations": [{
-                "relationPredicate": "kairos:Relations/sameAs",
-                "relationObject": x
-            } for x in v[1:]]
-        }
-        if cur_entity_relation["relations"]:
-            entity_relations.append(cur_entity_relation)
+    # for v in reverse_entity_map.values():
+    #     cur_entity_relation = {
+    #         "relationSubject": v[0],
+    #         "relations": [{
+    #             "relationPredicate": "kairos:Relations/sameAs",
+    #             "relationObject": x
+    #         } for x in v[1:]]
+    #     }
+    #     if cur_entity_relation["relations"]:
+    #         entity_relations.append(cur_entity_relation)
     schema["entityRelations"] = entity_relations
 
     return schema
