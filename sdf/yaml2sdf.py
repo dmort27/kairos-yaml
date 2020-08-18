@@ -109,6 +109,30 @@ def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
     return [f"kairos:{x}" for x in constraints]
 
 
+def create_slot(slot: Mapping[str, Any], schema_slot_counter, schema_id, step_type, slot_shared: bool, entity_map):
+    cur_slot: Dict[str, Any] = {
+        "name": get_slot_name(slot, slot_shared),
+        "@id": get_slot_id(slot, schema_slot_counter, schema_id, slot_shared),
+        "role": get_slot_role(slot, step_type),
+    }
+
+    constraints = get_slot_constraints(slot.get("constraints", []))
+    if constraints:
+        cur_slot["entityTypes"] = constraints
+    if "reference" in slot:
+        cur_slot["reference"] = slot["reference"]
+
+    # Get entity ID for relations
+    if "refvar" in slot:
+        entity_map[cur_slot["@id"]] = slot["refvar"]
+        cur_slot["refvar"] = slot["refvar"]
+    else:
+        logging.warning(f"{slot} misses refvar")
+        entity_map[cur_slot["@id"]] = str(random.random())
+
+    return cur_slot
+
+
 def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
     """Gets step ID.
 
@@ -178,32 +202,26 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
         for slot in step["slots"]:
             slot_shared = sum([slot["role"] == sl["role"] for sl in step["slots"]]) > 1
 
-            cur_slot: Dict[str, Any] = {
-                "name": get_slot_name(slot, slot_shared),
-                "@id": get_slot_id(slot, schema_slot_counter, schema["@id"], slot_shared),
-                "role": get_slot_role(slot, cur_step["@type"]),
-            }
+            slots.append(
+                create_slot(slot, schema_slot_counter, schema["@id"], cur_step["@type"], slot_shared, entity_map))
 
-            constraints = get_slot_constraints(slot.get("constraints", []))
-            if constraints:
-                cur_slot["entityTypes"] = constraints
-            if "reference" in slot:
-                cur_slot["reference"] = slot["reference"]
-            slots.append(cur_slot)
-
-            # Get entity ID for relations
-            if "refvar" in slot:
-                entity_map[cur_slot["@id"]] = slot["refvar"]
-            else:
-                logging.warning(f"{slot} misses refvar")
-                entity_map[cur_slot["@id"]] = str(random.random())
-
-        cur_step["slots"] = slots
+        cur_step["participants"] = slots
         steps.append(cur_step)
+
+    slots = []
+    for slot in yaml_data["slots"]:
+        slot_shared = sum([slot["role"] == sl["role"] for sl in yaml_data["slots"]]) > 1
+
+        parsed_slot = create_slot(slot, schema_slot_counter, schema["@id"], schema["@id"], slot_shared, entity_map)
+        parsed_slot["roleName"] = parsed_slot["role"]
+        del parsed_slot["role"]
+
+        slots.append(parsed_slot)
+    schema["slots"] = slots
 
     # Cleaning "-a" suffix for slots with counter == 1.
     for step in steps:
-        for slot in step["slots"]:
+        for slot in step["participants"]:
             if schema_slot_counter[slot["name"]] == 1:
                 temp = entity_map[slot["@id"]]
                 del entity_map[slot["@id"]]
