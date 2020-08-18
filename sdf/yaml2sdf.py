@@ -9,6 +9,7 @@ import random
 import typing
 from typing import Any, Dict, Mapping, Optional, Sequence, Union
 
+import requests
 import yaml
 
 EVENT_ONTOLOGY: Optional[Mapping[str, Any]] = None
@@ -318,6 +319,17 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
             schemas.append(out_json)
 
     json_data = merge_schemas(schemas, json_file.stem)
+
+    # Validate schemas
+    req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
+                        json=json_data,
+                        headers={
+                            "Accept": "application/json",
+                            "Content-Type": "application/ld+json"
+                        })
+    # req.status_code  # TODO: Use status code to determine whether there are errors
+    print(req.json())
+
     with json_file.open("w") as file:
         json.dump(json_data, file, ensure_ascii=True, indent=4)
 
