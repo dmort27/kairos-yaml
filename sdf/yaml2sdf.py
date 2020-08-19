@@ -132,6 +132,9 @@ def create_slot(slot: Mapping[str, Any], schema_slot_counter, schema_id, step_ty
         logging.warning(f"{slot} misses refvar")
         entity_map[cur_slot["@id"]] = str(random.random())
 
+    if "comment" in slot:
+        cur_slot["comment"] = slot["comment"]
+
     return cur_slot
 
 
