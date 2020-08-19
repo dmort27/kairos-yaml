@@ -170,7 +170,7 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
         "super": "kairos:Event",
         "name": yaml_data["schema_name"],
         "description": yaml_data["schema_dscpt"],
-        "version": "6/2/2020",
+        "version": yaml_data["schema_version"],
         "steps": [],
         "order": [],
         "entityRelations": []
