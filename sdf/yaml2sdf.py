@@ -330,8 +330,12 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
                             "Accept": "application/json",
                             "Content-Type": "application/ld+json"
                         })
-    # req.status_code  # TODO: Use status code to determine whether there are errors
-    print(req.json())
+    response = req.json()
+    validator_messages = response['errorsList'] + response['warningsList']
+    if validator_messages:
+        print('Messages from program validator:')
+        for message in validator_messages:
+            print(f'\t{message}')
 
     with json_file.open("w") as file:
         json.dump(json_data, file, ensure_ascii=True, indent=4)
