@@ -1,8 +1,10 @@
-"""Converts events from KAIROS ontology spreadsheet into usable JSON format."""
+"""Converts KAIROS ontology spreadsheet into usable JSON format."""
 
 import argparse
+import enum
 import json
 from pathlib import Path
+import re
 from typing import Any, Mapping
 
 import pandas as pd
@@ -10,39 +12,61 @@ import pandas as pd
 JsonObject = Mapping[str, Any]
 
 
-def read_events(sheet: pd.DataFrame) -> JsonObject:
-    """Converts spreadsheet events into a usable format.
+@enum.unique
+class Sheets(enum.Enum):
+    """Enum for sheets and their names."""
+    EVENTS = "events"
+    ENTITIES = "entities"
+    RELATIONS = "relations"
+
+
+def convert_sheet(sheet: pd.DataFrame, sheet_type: Sheets) -> JsonObject:
+    """Converts spreadsheet events, entities, and relations into a usable format.
 
     Args:
-        sheet: Contents of "events" sheet.
+        sheet: Contents of "events", "entities", or "relations" sheet.
+        sheet_type: Type of sheet to convert.
 
     Returns:
-        Usable representation of events.
+        Usable representation of events, entities, or relations.
     """
-    events = {}
+    arg_label_matches = (re.match(r"arg(\d+) label", col) for col in sheet.columns)
+    arg_label_ints = (int(match.group(1)) for match in arg_label_matches if match is not None)
+    max_arg_label_col = max(arg_label_ints, default=0) + 1
+
+    items = {}
     for row in sheet.iterrows():
         row = row[1]
-        event_type = ".".join([row["Type"], row["Subtype"], row["Sub-subtype"]])
-        event = {
+        if sheet_type == Sheets.ENTITIES:
+            item_type = row["Type"]
+        else:
+            item_type = ".".join([row["Type"], row["Subtype"], row["Sub-subtype"]])
+        item = {
             "id": row["AnnotIndexID"],
-            "type": event_type,
+            "type": item_type,
             "definition": row["Definition"],
-            "template": row["Template"],
-            "args": {
-                row[f"arg{i} label"]: {
-                    "position": f"arg{i}",
-                    "label": row[f"arg{i} label"],
-                    "constraints": row[f"arg{i} type constraints"],
-                }
-                for i in range(1, 7)
-                if isinstance(row[f"arg{i} label"], str)
-            },
         }
-        events[event_type] = event
-    return events
+        if sheet_type != Sheets.ENTITIES:
+            item.update(
+                {
+                    "template": row["Template"],
+                    "args": {
+                        row[f"arg{i} label"]: {
+                            "position": f"arg{i}",
+                            "label": row[f"arg{i} label"],
+                            "constraints": row[f"arg{i} type constraints"].upper().split(", "),
+                        }
+                        for i in range(1, max_arg_label_col)
+                        if isinstance(row[f"arg{i} label"], str)
+                    },
+                }
+            )
+        items[item_type] = item
+    return items
 
 
 def main() -> None:
+    """Converts spreadsheet to formatted JSON."""
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--in-file", type=Path, required=True,
                    help="Path to input KAIROS ontology Excel spreadsheet.")
@@ -50,11 +74,22 @@ def main() -> None:
                    help="Path to output JSON.")
     args = p.parse_args()
 
-    events_sheet = pd.read_excel(args.in_file, sheet_name="events")
-    events = read_events(events_sheet)
+    source_file_name = args.in_file.name
+    events_sheet = pd.read_excel(args.in_file, sheet_name=Sheets.EVENTS.value)
+    events = convert_sheet(events_sheet, Sheets.EVENTS)
+    entities_sheet = pd.read_excel(args.in_file, sheet_name=Sheets.ENTITIES.value)
+    entities = convert_sheet(entities_sheet, Sheets.ENTITIES)
+    relations_sheet = pd.read_excel(args.in_file, sheet_name=Sheets.RELATIONS.value)
+    relations = convert_sheet(relations_sheet, Sheets.RELATIONS)
+    output = {
+        "source_file": source_file_name,
+        "events": events,
+        "entities": entities,
+        "relations": relations,
+    }
 
     with open(args.out_file, "w") as file:
-        json.dump(events, file, ensure_ascii=False, indent=2)
+        json.dump(output, file, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

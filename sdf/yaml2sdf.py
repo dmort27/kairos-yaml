@@ -12,17 +12,17 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Union
 import requests
 import yaml
 
-EVENT_ONTOLOGY: Optional[Mapping[str, Any]] = None
+ONTOLOGY: Optional[Mapping[str, Any]] = None
 
 
-def get_event_ontology() -> Mapping[str, Any]:
-    global EVENT_ONTOLOGY
+def get_ontology() -> Mapping[str, Any]:
+    global ONTOLOGY
 
-    if EVENT_ONTOLOGY is None:
-        with Path("events.json").open() as file:
-            EVENT_ONTOLOGY = json.load(file)
+    if ONTOLOGY is None:
+        with Path("ontology.json").open() as file:
+            ONTOLOGY = json.load(file)
 
-    return EVENT_ONTOLOGY
+    return ONTOLOGY
 
 
 def get_step_type(step: Mapping[str, Any]) -> str:
@@ -40,7 +40,7 @@ def get_step_type(step: Mapping[str, Any]) -> str:
         primitive.extend(["Unspecified"] * (3 - len(primitive)))
     primitive = ".".join(primitive)
 
-    if primitive not in get_event_ontology():
+    if primitive not in get_ontology()['events']:
         logging.warning(f"Primitive '{step['primitive']}' in step '{step['id']}' not in ontology")
 
     return f"kairos:Primitives/Events/{primitive}"
@@ -56,7 +56,7 @@ def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
     Returns:
         Slot role.
     """
-    event_type = get_event_ontology().get(step_type.split("/")[-1], None)
+    event_type = get_ontology()['events'].get(step_type.split("/")[-1], None)
     if event_type is not None and slot['role'] not in event_type['args']:
         logging.warning(f"Role '{slot['role']}' is not valid for event '{event_type['type']}'")
 
