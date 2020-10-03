@@ -108,7 +108,11 @@ def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
     Returns:
         Slot constraints.
     """
-    return [f"kairos:Primitives/Entities/{x}" for x in constraints]
+    for entity in constraints:
+        if entity not in get_ontology()['entities']:
+            logging.warning(f"Entity '{entity}' not in ontology")
+
+    return [f"kairos:Primitives/Entities/{entity}" for entity in constraints]
 
 
 def create_slot(slot: Mapping[str, Any], schema_slot_counter, schema_id, step_type, slot_shared: bool, entity_map):
