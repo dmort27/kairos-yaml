@@ -1,5 +1,5 @@
 {
-  "source_file": "KAIROS_Annotation_Tagset_Phase_1_V2.0.xlsx",
+  "source_file": "KAIROS_Annotation_Tagset_Phase_1_V2.1.xlsx",
   "events": {
     "ArtifactExistence.DamageDestroyDisableDismantle.Damage": {
       "id": "LDC_KAIROS_evt_001",
@@ -29,7 +29,7 @@
             "NAT",
             "PTH",
             "VEH",
-            "WEA "
+            "WEA"
           ]
         },
         "Instrument": {
@@ -80,7 +80,7 @@
             "NAT",
             "PTH",
             "VEH",
-            "WEA "
+            "WEA"
           ]
         },
         "Instrument": {
@@ -231,7 +231,7 @@
             "NAT",
             "PTH",
             "VEH",
-            "WEA "
+            "WEA"
           ]
         },
         "Instrument": {
@@ -543,7 +543,7 @@
           "constraints": [
             "COM",
             "ABS",
-            "INF "
+            "INF"
           ]
         },
         "Institution": {
@@ -2064,9 +2064,9 @@
             "MHI"
           ]
         },
-        "Victim ": {
+        "Victim": {
           "position": "arg2",
-          "label": "Victim ",
+          "label": "Victim",
           "constraints": [
             "PER",
             "ORG",
@@ -2133,9 +2133,9 @@
       "definition": "For use as the crime argument in a Justice event when the crime event is not taggable as any other annotation ontology event type",
       "template": "<arg1> committed a crime against <arg2> at <arg3> place",
       "args": {
-        "Perpetrator ": {
+        "Perpetrator": {
           "position": "arg1",
-          "label": "Perpetrator ",
+          "label": "Perpetrator",
           "constraints": [
             "PER",
             "ORG",
@@ -2143,9 +2143,9 @@
             "SID"
           ]
         },
-        "Victim ": {
+        "Victim": {
           "position": "arg2",
-          "label": "Victim ",
+          "label": "Victim",
           "constraints": [
             "PER",
             "ORG",
@@ -2154,9 +2154,9 @@
             "AML"
           ]
         },
-        "Place ": {
+        "Place": {
           "position": "arg3",
-          "label": "Place ",
+          "label": "Place",
           "constraints": [
             "LOC",
             "GPE",
@@ -2178,7 +2178,7 @@
             "PER",
             "ORG",
             "GPE",
-            "SIDE"
+            "SID"
           ]
         },
         "Defendant": {
@@ -2222,7 +2222,7 @@
             "PER",
             "ORG",
             "GPE",
-            "SIDE"
+            "SID"
           ]
         },
         "Detainee": {
@@ -2559,7 +2559,7 @@
           "position": "arg2",
           "label": "ConsumedThing",
           "constraints": [
-            "COM "
+            "COM"
           ]
         },
         "Place": {
@@ -2719,9 +2719,9 @@
       "definition": "The physical injuring of a person or animal",
       "template": "<arg1> was injured by <arg2> using <arg3> in <arg4> body part with <arg5> medical issue at <arg6> place",
       "args": {
-        "Victim ": {
+        "Victim": {
           "position": "arg1",
-          "label": "Victim ",
+          "label": "Victim",
           "constraints": [
             "PER",
             "AML"
@@ -2781,9 +2781,9 @@
       "definition": "A determination of the disease or medical condition that explains a person's or animal's symptoms and signs",
       "template": "<arg1> treater diagnosed <arg2> patient with <arg3> symptom for <arg4> medical issue at <arg5> place",
       "args": {
-        "Treater ": {
+        "Treater": {
           "position": "arg1",
-          "label": "Treater ",
+          "label": "Treater",
           "constraints": [
             "PER",
             "ORG",
@@ -2830,9 +2830,9 @@
       "definition": "Any kind of medical treatment or intervention for a person or an animal, often following a diagnosis of a medical condition",
       "template": "<arg1> treater treated <arg2> patient for <arg3> medical issue with <arg4> means at <arg5> place",
       "args": {
-        "Treater ": {
+        "Treater": {
           "position": "arg1",
-          "label": "Treater ",
+          "label": "Treater",
           "constraints": [
             "PER",
             "ORG",
@@ -2848,9 +2848,9 @@
             "AML"
           ]
         },
-        "MedicalIssue ": {
+        "MedicalIssue": {
           "position": "arg3",
-          "label": "MedicalIssue ",
+          "label": "MedicalIssue",
           "constraints": [
             "MHI"
           ]
@@ -2879,9 +2879,9 @@
       "definition": "A person or an animal is inoculated against a disease",
       "template": "<arg1> treater vaccinated <arg2> patient via <arg4> vaccination method for <arg3> medical issue at <arg5> place",
       "args": {
-        "Treater ": {
+        "Treater": {
           "position": "arg1",
-          "label": "Treater ",
+          "label": "Treater",
           "constraints": [
             "PER",
             "ORG",
@@ -2959,7 +2959,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         },
         "Destination": {
@@ -2968,7 +2970,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         }
       }
@@ -3031,7 +3035,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         },
         "Destination": {
@@ -3040,7 +3046,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         }
       }
@@ -3093,7 +3101,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         },
         "Destination": {
@@ -3102,7 +3112,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         }
       }
@@ -3165,7 +3177,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         },
         "Destination": {
@@ -3174,7 +3188,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         }
       }
@@ -3227,7 +3243,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         },
         "Destination": {
@@ -3236,7 +3254,9 @@
           "constraints": [
             "LOC",
             "GPE",
-            "FAC"
+            "FAC",
+            "COM",
+            "VEH"
           ]
         }
       }
@@ -3548,9 +3568,9 @@
       "definition": "A voluntary transfer of resources from one GPE to another from the perspective of governments, often with strings attached",
       "template": "<arg1> government gave <arg4> aid to <arg2> government for the benefit of <arg3> at <arg5> place",
       "args": {
-        "Giver ": {
+        "Giver": {
           "position": "arg1",
-          "label": "Giver ",
+          "label": "Giver",
           "constraints": [
             "GPE"
           ]
@@ -3831,7 +3851,7 @@
     "PLA": {
       "id": "LDC_KAIROS_ent_016",
       "type": "PLA",
-      "definition": "Plants/flora as well as edible fungi such as mushrooms; multicellular living organisms, typically growing in the earth and  lacking the power of locomotion, ex. grass and crops such as wheat, beans, fruit, etc. "
+      "definition": "Plants/flora as well as edible fungi such as mushrooms; multicellular living organisms, typically growing in the earth and  lacking the power of locomotion, ex. grass and crops such as wheat, beans, fruit, etc."
     },
     "PTH": {
       "id": "LDC_KAIROS_ent_017",
@@ -4100,7 +4120,7 @@
     "GeneralAffiliation.ArtifactPoliticalOrganizationReligiousAffiliation.ControlTerritory": {
       "id": "LDC_KAIROS_rel_007",
       "type": "GeneralAffiliation.ArtifactPoliticalOrganizationReligiousAffiliation.ControlTerritory",
-      "definition": "A side, person, organization, location, or GPE controlling territory.  ",
+      "definition": "A side, person, organization, location, or GPE controlling territory.",
       "template": "<arg1> is controlled by <arg2>",
       "args": {
         "Territory": {
@@ -4659,7 +4679,8 @@
           "position": "arg2",
           "label": "PlaceOfEmployment",
           "constraints": [
-            "GPE,ORG"
+            "GPE",
+            "ORG"
           ]
         }
       }
@@ -4681,7 +4702,8 @@
           "position": "arg2",
           "label": "PlaceOfMembership",
           "constraints": [
-            "GPE,ORG"
+            "GPE",
+            "ORG"
           ]
         }
       }
@@ -5087,7 +5109,7 @@
           "position": "arg1",
           "label": "Resident",
           "constraints": [
-            "PER "
+            "PER"
           ]
         },
         "Place": {
