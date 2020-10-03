@@ -319,6 +319,21 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> M
     return sdf
 
 
+def validate_schemas(json_data: Mapping[str, Any]) -> None:
+    req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
+                        json=json_data,
+                        headers={
+                            "Accept": "application/json",
+                            "Content-Type": "application/ld+json"
+                        })
+    response = req.json()
+    validator_messages = response['errorsList'] + response['warningsList']
+    if validator_messages:
+        print('Messages from program validator:')
+        for message in validator_messages:
+            print(f'\t{message}')
+
+
 def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
     """Converts YAML files into a single JSON file.
 
@@ -336,19 +351,7 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
 
     json_data = merge_schemas(schemas, json_file.stem)
 
-    # Validate schemas
-    req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
-                        json=json_data,
-                        headers={
-                            "Accept": "application/json",
-                            "Content-Type": "application/ld+json"
-                        })
-    response = req.json()
-    validator_messages = response['errorsList'] + response['warningsList']
-    if validator_messages:
-        print('Messages from program validator:')
-        for message in validator_messages:
-            print(f'\t{message}')
+    validate_schemas(json_data)
 
     with json_file.open("w") as file:
         json.dump(json_data, file, ensure_ascii=True, indent=4)
