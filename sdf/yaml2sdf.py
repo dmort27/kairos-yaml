@@ -320,18 +320,23 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> M
 
 
 def validate_schemas(json_data: Mapping[str, Any]) -> None:
-    req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
-                        json=json_data,
-                        headers={
-                            "Accept": "application/json",
-                            "Content-Type": "application/ld+json"
-                        })
-    response = req.json()
-    validator_messages = response['errorsList'] + response['warningsList']
-    if validator_messages:
-        print('Messages from program validator:')
-        for message in validator_messages:
-            print(f'\t{message}')
+    try:
+        req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
+                            json=json_data,
+                            headers={
+                                "Accept": "application/json",
+                                "Content-Type": "application/ld+json"
+                            },
+                            timeout=10)
+    except requests.exceptions.Timeout:
+        logging.warning("Program validator is unavailable, so schema might not validate")
+    else:
+        response = req.json()
+        validator_messages = response['errorsList'] + response['warningsList']
+        if validator_messages:
+            print('Messages from program validator:')
+            for message in validator_messages:
+                print(f'\t{message}')
 
 
 def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
