@@ -2,6 +2,7 @@
 
 import argparse
 from collections import Counter, defaultdict
+import itertools
 import json
 import logging
 from pathlib import Path
@@ -244,6 +245,14 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
                 entity_map[slot["@id"]] = temp
 
     schema["steps"] = steps
+
+    step_ids = set(step['id'] for step in yaml_data["steps"])
+    order_ids = set(itertools.chain.from_iterable(x.values() for x in yaml_data["order"]))
+    missing_order_ids = order_ids - step_ids
+    if missing_order_ids:
+        for missing_id in missing_order_ids:
+            logging.error(f"The ID '{missing_id}' in `order` is not in `steps`")
+        exit(1)
 
     orders = []
     for order in yaml_data["order"]:
