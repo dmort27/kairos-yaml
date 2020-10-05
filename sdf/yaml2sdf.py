@@ -8,7 +8,7 @@ import logging
 from pathlib import Path
 import random
 import typing
-from typing import Any, Dict, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence, Union
 
 import requests
 import yaml
@@ -17,7 +17,12 @@ ONTOLOGY: Optional[Mapping[str, Any]] = None
 
 
 def get_ontology() -> Mapping[str, Any]:
-    global ONTOLOGY
+    """Loads the ontology from the JSON file.
+
+    Returns:
+        Ontology.
+    """
+    global ONTOLOGY  # pylint: disable=global-statement
 
     if ONTOLOGY is None:
         with Path("ontology.json").open() as file:
@@ -116,7 +121,21 @@ def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
     return [f"kairos:Primitives/Entities/{entity}" for entity in constraints]
 
 
-def create_slot(slot: Mapping[str, Any], schema_slot_counter, schema_id, step_type, slot_shared: bool, entity_map):
+def create_slot(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str], schema_id: str, step_type: str,
+                slot_shared: bool, entity_map: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    """Gets slot.
+
+    Args:
+        slot: Slot data.
+        schema_slot_counter: Slot counter.
+        schema_id: Schema ID.
+        step_type: Type of step.
+        slot_shared: Whether slot is shared.
+        entity_map: Mapping from mentions to entities.
+
+    Returns:
+        Slot.
+    """
     cur_slot: Dict[str, Any] = {
         "name": get_slot_name(slot, slot_shared),
         "@id": get_slot_id(slot, schema_slot_counter, schema_id, slot_shared),
@@ -190,7 +209,7 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     steps = []
 
     # For sameAs relation
-    entity_map = {}
+    entity_map: MutableMapping[str, Any] = {}
     # For order
     step_map: Dict[str, Dict[str, Union[int, str]]] = {}
 
@@ -283,7 +302,7 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     reverse_entity_map = defaultdict(list)
     for k, v in entity_map.items():
         reverse_entity_map[v].append(k)
-    entity_relations = []
+    entity_relations: Sequence[Any] = []
     # for v in reverse_entity_map.values():
     #     cur_entity_relation = {
     #         "relationSubject": v[0],
@@ -320,6 +339,14 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> M
 
 
 def validate_schemas(json_data: Mapping[str, Any]) -> None:
+    """Validates generated schema against the program validator.
+
+    The program validator is not always avoilable, so the request will time out if no response is
+    received within 10 seconds.
+
+    Args:
+        json_data: Data in JSON output format.
+    """
     try:
         req = requests.post("http://validation.kairos.nextcentury.com/json-ld/ksf/validate",
                             json=json_data,
@@ -363,6 +390,7 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
 
 
 def main() -> None:
+    """Converts YAML schema into JSON SDF."""
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--input-files", nargs="+", type=Path, required=True,
                    help="Paths to input YAML schemas.")
