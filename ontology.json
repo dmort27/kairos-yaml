@@ -1,5 +1,5 @@
 {
-  "source_file": "KAIROS_Annotation_Tagset_Phase_1_V2.1.xlsx",
+  "source_file": "KAIROS_Annotation_Tagset_Phase_1_V3.0.xlsx",
   "events": {
     "ArtifactExistence.DamageDestroyDisableDismantle.Damage": {
       "id": "LDC_KAIROS_evt_001",
@@ -155,7 +155,7 @@
       "id": "LDC_KAIROS_evt_004",
       "type": "ArtifactExistence.DamageDestroyDisableDismantle.Dismantle",
       "definition": "Disassembling an artifact in such a way that it could be reassembled",
-      "template": "<arg1> dismantled <arg2> using <arg3> instrument in <arg4> place",
+      "template": "<arg1> dismantled <arg2> using <arg3> instrument into <arg4> components in <arg5> place",
       "args": {
         "Dismantler": {
           "position": "arg1",
@@ -3791,7 +3791,7 @@
     "BOD": {
       "id": "LDC_KAIROS_ent_004",
       "type": "BOD",
-      "definition": "An identifiable, living part of an human's or animal's body, such as a eye, ear, neck, leg, etc."
+      "definition": "An identifiable, living part of a human's or animal's body, such as a eye, ear, neck, leg, etc."
     },
     "COM": {
       "id": "LDC_KAIROS_ent_005",
