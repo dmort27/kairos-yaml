@@ -33,7 +33,7 @@ python convert_ontology.py --in-file KAIROS_Annotation_Tagset_Phase_1_V3.0.xlsx 
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines,
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines.
 
 ## License
 
