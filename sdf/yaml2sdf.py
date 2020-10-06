@@ -8,9 +8,10 @@ import logging
 from pathlib import Path
 import random
 import typing
-from typing import Any, Dict, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import Any, Mapping, MutableMapping, Optional, Sequence, Union
 
 import requests
+from typing_extensions import TypedDict
 import yaml
 
 ONTOLOGY: Optional[Mapping[str, Any]] = None
@@ -136,7 +137,7 @@ def create_slot(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str
     Returns:
         Slot.
     """
-    cur_slot: Dict[str, Any] = {
+    cur_slot: MutableMapping[str, Any] = {
         "name": get_slot_name(slot, slot_shared),
         "@id": get_slot_id(slot, schema_slot_counter, schema_id, slot_shared),
         "role": get_slot_role(slot, step_type),
@@ -210,14 +211,19 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
 
     # For sameAs relation
     entity_map: MutableMapping[str, Any] = {}
+
     # For order
-    step_map: Dict[str, Dict[str, Union[int, str]]] = {}
+    class StepMapItem(TypedDict):
+        id: str
+        step_idx: int
+
+    step_map: MutableMapping[str, StepMapItem] = {}
 
     # For naming slot ID
     schema_slot_counter: typing.Counter[str] = Counter()
 
     for idx, step in enumerate(yaml_data["steps"]):
-        cur_step: Dict[str, Any] = {
+        cur_step: MutableMapping[str, Any] = {
             "@id": get_step_id(step, schema["@id"]),
             "name": step["id"],
             "@type": get_step_type(step),
@@ -266,7 +272,8 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     schema["steps"] = steps
 
     step_ids = set(step['id'] for step in yaml_data["steps"])
-    order_ids = set(itertools.chain.from_iterable(x.values() for x in yaml_data["order"]))
+    order_ids = set(itertools.chain.from_iterable(
+        x["overlaps"] if tuple(x) == ("overlaps",) else x.values() for x in yaml_data["order"]))
     missing_order_ids = order_ids - step_ids
     if missing_order_ids:
         for missing_id in missing_order_ids:
@@ -284,13 +291,39 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
                 logging.warning(f"before: {order['before']} does not appear in the steps")
             if not after_id and not after_idx:
                 logging.warning(f"after: {order['after']} does not appear in the steps")
-            cur_order = {
+            cur_order: Mapping[str, Union[str, Sequence[str]]] = {
                 "comment": f"{before_idx} precedes {after_idx}",
                 "before": before_id,
                 "after": after_id
             }
-        elif "overlap" in order:
-            raise NotImplementedError
+        elif "container" in order and "contained" in order:
+            container_idx = step_map[order['container']]['step_idx']
+            container_id = step_map[order['container']]['id']
+            contained_idx = step_map[order['contained']]['step_idx']
+            contained_id = step_map[order['contained']]['id']
+            if not container_id and not container_idx:
+                logging.warning(f"container: {order['container']} does not appear in the steps")
+            if not contained_id and not contained_idx:
+                logging.warning(f"contained: {order['contained']} does not appear in the steps")
+            cur_order = {
+                "comment": f"{container_idx} contains {contained_idx}",
+                "container": container_id,
+                "contained": contained_id
+            }
+        elif "overlaps" in order:
+            overlaps_idx = []
+            overlaps_id = []
+            for overlap in order['overlaps']:
+                overlap_idx = step_map[overlap]['step_idx']
+                overlap_id = step_map[overlap]['id']
+                if not overlap_id and not overlap_idx:
+                    logging.warning(f"overlaps: {overlap_id} does not appear in the steps")
+                overlaps_idx.append(overlap_idx)
+                overlaps_id.append(overlap_id)
+            cur_order = {
+                "comment": f"{', '.join(str(i) for i in overlaps_idx)} overlaps",
+                "overlaps": overlaps_id,
+            }
         else:
             raise NotImplementedError
         orders.append(cur_order)
