@@ -1,9 +1,11 @@
 default:
 	@echo "an explicit target is required"
 
-SOURCE_DIR_NAME=convert_ontology.py sdf/yaml2sdf.py
-PRETTIER_FILES=.prettierrc.yaml *.md
+SHELL=/usr/bin/env bash
+
+PYTHON_FILES=convert_ontology.py sdf/yaml2sdf.py
 YAML_FILES=.prettierrc.yaml
+PRETTIER_FILES=$(YAML_FILES) *.md
 
 PRETTIER=prettier --ignore-path .gitignore
 
@@ -14,16 +16,16 @@ prettier-check:
 	$(PRETTIER) --check $(PRETTIER_FILES)
 
 lint:
-	pylint $(SOURCE_DIR_NAME)
+	pylint $(PYTHON_FILES)
 
 docstyle:
-	pydocstyle --convention=google $(SOURCE_DIR_NAME)
+	pydocstyle --convention=google $(PYTHON_FILES)
 
 mypy:
-	mypy $(SOURCE_DIR_NAME)
+	mypy $(PYTHON_FILES)
 
 flake8:
-	flake8 $(SOURCE_DIR_NAME)
+	flake8 $(PYTHON_FILES)
 
 yamllint:
 	yamllint --strict $(YAML_FILES)
@@ -37,12 +39,12 @@ reqs-check:
 	sort --check requirements-dev.txt
 
 black-fix:
-	isort $(SOURCE_DIR_NAME)
-	#black $(SOURCE_DIR_NAME)
+	isort $(PYTHON_FILES)
+	#black $(PYTHON_FILES)
 
 black-check:
-	isort --check $(SOURCE_DIR_NAME)
-	#black --check $(SOURCE_DIR_NAME)
+	isort --check $(PYTHON_FILES)
+	#black --check $(PYTHON_FILES)
 
 check: reqs-check black-check flake8 mypy lint docstyle prettier-check yamllint
 
