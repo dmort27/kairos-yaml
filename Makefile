@@ -28,6 +28,14 @@ flake8:
 yamllint:
 	yamllint --strict $(YAML_FILES)
 
+reqs-fix:
+	sort --output=requirements.txt requirements.txt
+	sort --output=requirements-dev.txt requirements-dev.txt
+
+reqs-check:
+	sort --check requirements.txt
+	sort --check requirements-dev.txt
+
 black-fix:
 	isort $(SOURCE_DIR_NAME)
 	#black $(SOURCE_DIR_NAME)
@@ -36,9 +44,9 @@ black-check:
 	isort --check $(SOURCE_DIR_NAME)
 	#black --check $(SOURCE_DIR_NAME)
 
-check: black-check flake8 mypy lint docstyle yamllint prettier-check
+check: reqs-check black-check flake8 mypy lint docstyle prettier-check yamllint
 
-precommit: black-fix prettier-fix check
+precommit: reqs-fix black-fix prettier-fix check
 
 install:
 	pip install -U pip setuptools wheel
