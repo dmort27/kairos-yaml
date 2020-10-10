@@ -11,6 +11,11 @@ The following software is required on the platform:
 - Python 3.7.8
 - Make
 
+For running all checks, the following software is also needed:
+
+- GNU Coreutils
+- [Prettier](https://prettier.io/)
+
 ## Installation
 
 Make sure all requirements are installed on the system before beginning setup.
