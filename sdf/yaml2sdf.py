@@ -8,11 +8,14 @@ import logging
 from pathlib import Path
 import random
 import typing
-from typing import Any, Mapping, MutableMapping, Optional, Sequence, Union
+from typing import Any, List, Mapping, MutableMapping, Optional, Sequence, Tuple, Union
 
+from pydantic import parse_obj_as
 import requests
 from typing_extensions import TypedDict
 import yaml
+
+from yaml_schema import Before, Container, Overlaps, Schema, Slot, Step
 
 ONTOLOGY: Optional[Mapping[str, Any]] = None
 
@@ -32,7 +35,7 @@ def get_ontology() -> Mapping[str, Any]:
     return ONTOLOGY
 
 
-def get_step_type(step: Mapping[str, Any]) -> str:
+def get_step_type(step: Step) -> str:
     """Gets type of step.
 
     Args:
@@ -42,18 +45,18 @@ def get_step_type(step: Mapping[str, Any]) -> str:
         Step type.
     """
     # Add missing "Unspecified"s
-    primitive = step["primitive"].split(".")
+    primitive = step.primitive.split(".")
     if len(primitive) < 3:
         primitive.extend(["Unspecified"] * (3 - len(primitive)))
     primitive = ".".join(primitive)
 
     if primitive not in get_ontology()['events']:
-        logging.warning(f"Primitive '{step['primitive']}' in step '{step['id']}' not in ontology")
+        logging.warning(f"Primitive '{step.primitive}' in step '{step.id}' not in ontology")
 
     return f"kairos:Primitives/Events/{primitive}"
 
 
-def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
+def get_slot_role(slot: Slot, step_type: str) -> str:
     """Gets slot role.
 
     Args:
@@ -64,13 +67,13 @@ def get_slot_role(slot: Mapping[str, Any], step_type: str) -> str:
         Slot role.
     """
     event_type = get_ontology()['events'].get(step_type.split("/")[-1], None)
-    if event_type is not None and slot['role'] not in event_type['args']:
-        logging.warning(f"Role '{slot['role']}' is not valid for event '{event_type['type']}'")
+    if event_type is not None and slot.role not in event_type['args']:
+        logging.warning(f"Role '{slot.role}' is not valid for event '{event_type['type']}'")
 
-    return f"{step_type}/Slots/{slot['role']}"
+    return f"{step_type}/Slots/{slot.role}"
 
 
-def get_slot_name(slot: Mapping[str, Any], slot_shared: bool) -> str:
+def get_slot_name(slot: Slot, slot_shared: bool) -> str:
     """Gets slot name.
 
     Args:
@@ -80,14 +83,14 @@ def get_slot_name(slot: Mapping[str, Any], slot_shared: bool) -> str:
     Returns:
         Slot name.
     """
-    name = "".join([' ' + x if x.isupper() else x for x in slot["role"]]).lstrip()
+    name = "".join([' ' + x if x.isupper() else x for x in slot.role]).lstrip()
     name = name.split()[0].lower()
-    if slot_shared:
-        name += "-" + slot["refvar"]
+    if slot_shared and slot.refvar is not None:
+        name += "-" + slot.refvar
     return name
 
 
-def get_slot_id(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str],
+def get_slot_id(slot: Slot, schema_slot_counter: typing.Counter[str],
                 schema_id: str, slot_shared: bool) -> str:
     """Gets slot ID.
 
@@ -122,7 +125,7 @@ def get_slot_constraints(constraints: Sequence[str]) -> Sequence[str]:
     return [f"kairos:Primitives/Entities/{entity}" for entity in constraints]
 
 
-def create_slot(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str], schema_id: str, step_type: str,
+def create_slot(slot: Slot, schema_slot_counter: typing.Counter[str], schema_id: str, step_type: str,
                 slot_shared: bool, entity_map: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
     """Gets slot.
 
@@ -143,27 +146,27 @@ def create_slot(slot: Mapping[str, Any], schema_slot_counter: typing.Counter[str
         "role": get_slot_role(slot, step_type),
     }
 
-    constraints = get_slot_constraints(slot.get("constraints", []))
+    constraints = get_slot_constraints(slot.constraints if slot.constraints is not None else [])
     if constraints:
         cur_slot["entityTypes"] = constraints
-    if "reference" in slot:
-        cur_slot["reference"] = slot["reference"]
+    if slot.reference is not None:
+        cur_slot["reference"] = slot.reference
 
     # Get entity ID for relations
-    if "refvar" in slot:
-        entity_map[cur_slot["@id"]] = slot["refvar"]
-        cur_slot["refvar"] = slot["refvar"]
+    if slot.refvar is not None:
+        entity_map[cur_slot["@id"]] = slot.refvar
+        cur_slot["refvar"] = slot.refvar
     else:
         logging.warning(f"{slot} misses refvar")
         entity_map[cur_slot["@id"]] = str(random.random())
 
-    if "comment" in slot:
-        cur_slot["comment"] = slot["comment"]
+    if slot.comment is not None:
+        cur_slot["comment"] = slot.comment
 
     return cur_slot
 
 
-def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
+def get_step_id(step: Step, schema_id: str) -> str:
     """Gets step ID.
 
     Args:
@@ -173,10 +176,10 @@ def get_step_id(step: Mapping[str, Any], schema_id: str) -> str:
     Returns:
         Step ID.
     """
-    return f"{schema_id}/Steps/{step['id']}"
+    return f"{schema_id}/Steps/{step.id}"
 
 
-def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
+def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
     """Converts YAML to SDF.
 
     Args:
@@ -190,19 +193,19 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
     #                                assigned_info["schema_name"][1:].lower()
     schema = {
-        "@id": yaml_data["schema_id"],
+        "@id": yaml_data.schema_id,
         "comment": '',
         "super": "kairos:Event",
-        "name": yaml_data["schema_name"],
-        "description": yaml_data["schema_dscpt"],
-        "version": yaml_data["schema_version"],
+        "name": yaml_data.schema_name,
+        "description": yaml_data.schema_dscpt,
+        "version": yaml_data.schema_version,
         "steps": [],
         "order": [],
         "entityRelations": []
     }
 
     # Get comments
-    comments = [x["id"].replace("-", " ") for x in yaml_data["steps"]]
+    comments = [x.id.replace("-", " ") for x in yaml_data.steps]
     comments = ["Steps:"] + [f"{idx + 1}. {text}" for idx, text in enumerate(comments)]
     schema["comment"] = comments
 
@@ -222,24 +225,24 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
     # For naming slot ID
     schema_slot_counter: typing.Counter[str] = Counter()
 
-    for idx, step in enumerate(yaml_data["steps"]):
+    for idx, step in enumerate(yaml_data.steps):
         cur_step: MutableMapping[str, Any] = {
             "@id": get_step_id(step, schema["@id"]),
-            "name": step["id"],
+            "name": step.id,
             "@type": get_step_type(step),
             "comment": comments[idx + 1],
         }
-        if "comment" in step:
-            cur_step["comment"] += "\n" + step["comment"]
+        if step.comment is not None:
+            cur_step["comment"] += "\n" + step.comment
 
-        if "provenance" in step:
-            cur_step["provenance"] = step["provenance"]
+        # if "provenance" in step:
+        #     cur_step["provenance"] = step["provenance"]
 
-        step_map[step["id"]] = {"id": cur_step["@id"], "step_idx": idx + 1}
+        step_map[step.id] = {"id": cur_step["@id"], "step_idx": idx + 1}
 
         slots = []
-        for slot in step["slots"]:
-            slot_shared = sum([slot["role"] == sl["role"] for sl in step["slots"]]) > 1
+        for slot in step.slots:
+            slot_shared = sum([slot.role == sl.role for sl in step.slots]) > 1
 
             slots.append(
                 create_slot(slot, schema_slot_counter, schema["@id"], cur_step["@type"], slot_shared, entity_map))
@@ -248,8 +251,8 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
         steps.append(cur_step)
 
     slots = []
-    for slot in yaml_data["slots"]:
-        slot_shared = sum([slot["role"] == sl["role"] for sl in yaml_data["slots"]]) > 1
+    for slot in yaml_data.slots:
+        slot_shared = sum([slot.role == sl.role for sl in yaml_data.slots]) > 1
 
         parsed_slot = create_slot(slot, schema_slot_counter, schema["@id"], schema["@id"], slot_shared, entity_map)
         parsed_slot["roleName"] = parsed_slot["role"]
@@ -271,9 +274,18 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
 
     schema["steps"] = steps
 
-    step_ids = set(step['id'] for step in yaml_data["steps"])
-    order_ids = set(itertools.chain.from_iterable(
-        x["overlaps"] if tuple(x) == ("overlaps",) else x.values() for x in yaml_data["order"]))
+    step_ids = set(step.id for step in yaml_data.steps)
+    order_tuples: List[Tuple[str, ...]] = []
+    for order in yaml_data.order:
+        if isinstance(order, Before):
+            order_tuples.append((order.before, order.after))
+        elif isinstance(order, Container):
+            order_tuples.append((order.container, order.contained))
+        elif isinstance(order, Overlaps):
+            order_tuples.append(tuple(order.overlaps))
+        else:
+            raise NotImplementedError
+    order_ids = set(itertools.chain.from_iterable(order_tuples))
     missing_order_ids = order_ids - step_ids
     if missing_order_ids:
         for missing_id in missing_order_ids:
@@ -281,39 +293,39 @@ def convert_yaml_to_sdf(yaml_data: Mapping[str, Any]) -> Mapping[str, Any]:
         exit(1)
 
     orders = []
-    for order in yaml_data["order"]:
-        if "before" in order and "after" in order:
-            before_idx = step_map[order['before']]['step_idx']
-            before_id = step_map[order['before']]['id']
-            after_idx = step_map[order['after']]['step_idx']
-            after_id = step_map[order['after']]['id']
+    for order in yaml_data.order:
+        if isinstance(order, Before):
+            before_idx = step_map[order.before]['step_idx']
+            before_id = step_map[order.before]['id']
+            after_idx = step_map[order.after]['step_idx']
+            after_id = step_map[order.after]['id']
             if not before_id and not before_idx:
-                logging.warning(f"before: {order['before']} does not appear in the steps")
+                logging.warning(f"before: {order.before} does not appear in the steps")
             if not after_id and not after_idx:
-                logging.warning(f"after: {order['after']} does not appear in the steps")
+                logging.warning(f"after: {order.after} does not appear in the steps")
             cur_order: Mapping[str, Union[str, Sequence[str]]] = {
                 "comment": f"{before_idx} precedes {after_idx}",
                 "before": before_id,
                 "after": after_id
             }
-        elif "container" in order and "contained" in order:
-            container_idx = step_map[order['container']]['step_idx']
-            container_id = step_map[order['container']]['id']
-            contained_idx = step_map[order['contained']]['step_idx']
-            contained_id = step_map[order['contained']]['id']
+        elif isinstance(order, Container):
+            container_idx = step_map[order.container]['step_idx']
+            container_id = step_map[order.container]['id']
+            contained_idx = step_map[order.contained]['step_idx']
+            contained_id = step_map[order.contained]['id']
             if not container_id and not container_idx:
-                logging.warning(f"container: {order['container']} does not appear in the steps")
+                logging.warning(f"container: {order.container} does not appear in the steps")
             if not contained_id and not contained_idx:
-                logging.warning(f"contained: {order['contained']} does not appear in the steps")
+                logging.warning(f"contained: {order.contained} does not appear in the steps")
             cur_order = {
                 "comment": f"{container_idx} contains {contained_idx}",
                 "container": container_id,
                 "contained": contained_id
             }
-        elif "overlaps" in order:
+        elif isinstance(order, Overlaps):
             overlaps_idx = []
             overlaps_id = []
-            for overlap in order['overlaps']:
+            for overlap in order.overlaps:
                 overlap_idx = step_map[overlap]['step_idx']
                 overlap_id = step_map[overlap]['id']
                 if not overlap_id and not overlap_idx:
@@ -410,7 +422,11 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
     for yaml_file in yaml_files:
         with yaml_file.open() as file:
             yaml_data = yaml.safe_load(file)
-        for yaml_schema in yaml_data:
+        parsed_yaml = parse_obj_as(List[Schema], yaml_data)
+        if [p.dict(exclude_none=True) for p in parsed_yaml] != yaml_data:
+            raise RuntimeError(
+                "The parsed and raw schemas do not match. The schema might have misordered fields, or there is a bug in this script.")
+        for yaml_schema in parsed_yaml:
             out_json = convert_yaml_to_sdf(yaml_schema)
             schemas.append(out_json)
 
