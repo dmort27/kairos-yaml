@@ -292,6 +292,7 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
             logging.error(f"The ID '{missing_id}' in `order` is not in `steps`")
         exit(1)
 
+    base_order_id = f'{schema["@id"]}/Order/'
     orders = []
     for order in yaml_data.order:
         if isinstance(order, Before):
@@ -304,6 +305,7 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
             if not after_id and not after_idx:
                 logging.warning(f"after: {order.after} does not appear in the steps")
             cur_order: Mapping[str, Union[str, Sequence[str]]] = {
+                "@id": f"{base_order_id}precede-{before_idx}-{after_idx}",
                 "comment": f"{before_idx} precedes {after_idx}",
                 "before": before_id,
                 "after": after_id
@@ -318,6 +320,7 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
             if not contained_id and not contained_idx:
                 logging.warning(f"contained: {order.contained} does not appear in the steps")
             cur_order = {
+                "@id": f"{base_order_id}contain-{container_idx}-{contained_idx}",
                 "comment": f"{container_idx} contains {contained_idx}",
                 "container": container_id,
                 "contained": contained_id
@@ -333,6 +336,7 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
                 overlaps_idx.append(overlap_idx)
                 overlaps_id.append(overlap_id)
             cur_order = {
+                "@id": f"{base_order_id}overlap-{'-'.join(str(i) for i in overlaps_idx)}",
                 "comment": f"{', '.join(str(i) for i in overlaps_idx)} overlaps",
                 "overlaps": overlaps_id,
             }
