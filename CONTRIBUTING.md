@@ -17,6 +17,8 @@ In general, try to be internally consistent. This project does not need to adher
 
 Branch names, commit messages, issues, and pull requests should all be descriptive with appropriate spelling, grammar, and style.
 
+Commit messages should follow the style outlined in "[How to Write a Git Commit Message](https://chris.beams.io/posts/git-commit/)". In most cases only a single line is necessary, as additional detail can be put in a PR.
+
 For non-trivial fixes, an issue should generally be created, especially if an experiment's results need to be documented somewhere.
 
 If a new branch is created for an issue, the branch name should start with the issue number. For example, a branch for issue #42, "Lorem ipsum dolor sit amet", should be called something like `42-lorem-ipsum`.
@@ -65,6 +67,8 @@ In most cases, rebase before merging. The following commands are an example of r
 To check code quality, run `make check`. Before committing, run `make precommit` to format and check code.
 
 _(Not set up yet)_ Travis CI is set up to automatically check code in the repository. PRs cannot be merged unless all checks pass. If checks do not pass, then either the code or the check themselves need to be changed.
+
+All files should use Linux-style newlines.
 
 Indentation should be with spaces, not tabs. Most files should be indented with 2 spaces, with Python being the main exception.
 
@@ -119,6 +123,6 @@ Formatting is checked with Prettier (see later section).
 
 In most cases, running the program is the only testing needed.
 
-A manual test plans should be written once this project is more mature.
+A manual test plans should be written.
 
 There is currently no automated testing, but it might be useful in the future.
