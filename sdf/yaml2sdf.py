@@ -45,10 +45,10 @@ def get_step_type(step: Step) -> str:
         Step type.
     """
     # Add missing "Unspecified"s
-    primitive = step.primitive.split(".")
-    if len(primitive) < 3:
-        primitive.extend(["Unspecified"] * (3 - len(primitive)))
-    primitive = ".".join(primitive)
+    primitive_segments = step.primitive.split(".")
+    if len(primitive_segments) < 3:
+        primitive_segments.extend(["Unspecified"] * (3 - len(primitive_segments)))
+    primitive = ".".join(primitive_segments)
 
     if primitive not in get_ontology()['events']:
         logging.warning(f"Primitive '{step.primitive}' in step '{step.id}' not in ontology")
@@ -192,7 +192,7 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
     #                                         in assigned_info["schema_id"][len("cmu:"):]]).lstrip()
     # assigned_info["schema_name"] = assigned_info["schema_name"][0] + \
     #                                assigned_info["schema_name"][1:].lower()
-    schema = {
+    schema: MutableMapping[str, Any] = {
         "@id": yaml_data.schema_id,
         "comment": '',
         "super": "kairos:Event",
@@ -262,15 +262,15 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
     schema["slots"] = slots
 
     # Cleaning "-a" suffix for slots with counter == 1.
-    for step in steps:
-        for slot in step["participants"]:
-            if schema_slot_counter[slot["name"]] == 1:
-                temp = entity_map[slot["@id"]]
-                del entity_map[slot["@id"]]
+    for cur_step in steps:
+        for cur_slot in cur_step["participants"]:
+            if schema_slot_counter[cur_slot["name"]] == 1:
+                temp = entity_map[cur_slot["@id"]]
+                del entity_map[cur_slot["@id"]]
 
-                slot["@id"] = slot["@id"].strip("-a")
+                cur_slot["@id"] = cur_slot["@id"].strip("-a")
 
-                entity_map[slot["@id"]] = temp
+                entity_map[cur_slot["@id"]] = temp
 
     schema["steps"] = steps
 
