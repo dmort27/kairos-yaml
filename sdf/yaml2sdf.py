@@ -363,12 +363,12 @@ def convert_yaml_to_sdf(yaml_data: Schema) -> Mapping[str, Any]:
     return schema
 
 
-def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> Mapping[str, Any]:
+def merge_schemas(schema_list: Sequence[Mapping[str, Any]], library_id: str) -> Mapping[str, Any]:
     """Merge multiple schemas.
 
     Args:
         schema_list: List of SDF schemas.
-        schema_id: ID of schema collection.
+        library_id: ID of schema collection.
 
     Returns:
         Data in JSON output format.
@@ -376,7 +376,7 @@ def merge_schemas(schema_list: Sequence[Mapping[str, Any]], schema_id: str) -> M
     sdf = {
         "@context": ["https://kairos-sdf.s3.amazonaws.com/context/kairos-v0.81.jsonld"],
         "sdfVersion": "0.81",
-        "@id": schema_id,
+        "@id": library_id,
         "schemas": schema_list,
     }
 
@@ -411,6 +411,33 @@ def validate_schemas(json_data: Mapping[str, Any]) -> None:
                 print(f'\t{message}')
 
 
+def convert_all_yaml_to_sdf(yaml_schemas: Sequence[Mapping[str, Any]], library_id: str) -> Mapping[str, Any]:
+    """Convert YAML schema library into SDF schema library.
+
+    Args:
+        yaml_schemas: YAML schemas.
+        library_id: ID of schema collection.
+
+    Returns:
+        Data in JSON output format.
+    """
+    sdf_schemas = []
+
+    parsed_yaml = parse_obj_as(List[Schema], yaml_schemas)
+    if [p.dict(exclude_none=True) for p in parsed_yaml] != yaml_schemas:
+        raise RuntimeError(
+            "The parsed and raw schemas do not match. The schema might have misordered fields, or there is a bug in this script.")
+    for yaml_schema in parsed_yaml:
+        out_json = convert_yaml_to_sdf(yaml_schema)
+        sdf_schemas.append(out_json)
+
+    json_data = merge_schemas(sdf_schemas, library_id)
+
+    validate_schemas(json_data)
+
+    return json_data
+
+
 def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
     """Converts YAML files into a single JSON file.
 
@@ -418,24 +445,16 @@ def convert_files(yaml_files: Sequence[Path], json_file: Path) -> None:
         yaml_files: List of YAML file paths.
         json_file: JSON file path.
     """
-    schemas = []
+    input_schemas = []
     for yaml_file in yaml_files:
         with yaml_file.open() as file:
             yaml_data = yaml.safe_load(file)
-        parsed_yaml = parse_obj_as(List[Schema], yaml_data)
-        if [p.dict(exclude_none=True) for p in parsed_yaml] != yaml_data:
-            raise RuntimeError(
-                "The parsed and raw schemas do not match. The schema might have misordered fields, or there is a bug in this script.")
-        for yaml_schema in parsed_yaml:
-            out_json = convert_yaml_to_sdf(yaml_schema)
-            schemas.append(out_json)
+        input_schemas.extend(yaml_data)
 
-    json_data = merge_schemas(schemas, json_file.stem)
-
-    validate_schemas(json_data)
+    output_library = convert_all_yaml_to_sdf(input_schemas, json_file.stem)
 
     with json_file.open("w") as file:
-        json.dump(json_data, file, ensure_ascii=True, indent=4)
+        json.dump(output_library, file, ensure_ascii=True, indent=4)
 
 
 def main() -> None:
